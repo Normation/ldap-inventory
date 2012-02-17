@@ -618,7 +618,7 @@ class InventoryMapper(
     }:_*)
     
     root +=! (A_ACCOUNT, server.accounts:_*)
-    root +=! (A_NODE_ECHNIQUES, server.techniques:_*)
+    root +=! (A_NODE_TECHNIQUES, server.techniques:_*)
     root +=! (A_LIST_OF_IP, server.serverIps:_*)
 
     val tree = LDAPTree(root)
