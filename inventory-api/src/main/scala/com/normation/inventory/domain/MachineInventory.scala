@@ -59,6 +59,24 @@ case class Controller(
   quantity:Int = 1
 ) extends PhysicalElement with HashcodeCaching
 
+case class CPU (
+    manufacturer : Option[String],
+    name : Option[String],  
+    description:Option[String] = None,
+    speed : Option[Float],
+    externalClock : Option[Float],
+    core : Option[Int],
+    thread : Option[Int],
+    cpuid : Option[String],
+    stepping : Option[Int],
+    family : Option[Int],
+    familyName : Option[String],
+    model : Option[Int],
+    quantity : Int = 1
+) extends PhysicalElement with HashcodeCaching
+
+
+
 case class MemorySlot (
   slotNumber: String, //string, because sometime it looks like: RAM slot #0
   name:Option[String] = None,
@@ -159,6 +177,7 @@ case class MachineInventory(
   inventoryDate: Option[DateTime] = None,
   bios : Seq[Bios] = Nil,
   controllers : Seq[Controller] = Nil,
+  cpus : Seq[CPU] = Nil,
   memories : Seq[MemorySlot] = Nil,
   ports : Seq[Port] = Nil,
   processors : Seq[Processor] = Nil,
