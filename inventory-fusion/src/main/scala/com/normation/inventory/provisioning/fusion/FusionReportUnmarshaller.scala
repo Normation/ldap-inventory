@@ -651,9 +651,16 @@ class FusionReportUnmarshaller(
     }
   }
   def processCpu(c : NodeSeq) : Option[CPU] = {
-    Some (
-		CPU (
-		    manufacturer  = optText(c\"MANUFACTURER")
+    (optText(c\"MANUFACTURER"),optText(c\"ARCH")) match{
+      case (None,None) =>
+        logger.debug("Ignoring entry CPU because tag MANIFACTURER and ARCH are empty")
+        logger.debug(c)
+        None
+      case (_,_) =>
+        Some (
+            CPU (
+		    manufacturer    = optText(c\"MANUFACTURER")
+		    , arch          = optText(c\"ARCH")
 		    , name          = optText(c\"NAME")
 		    , speed         = optText(c\"SPEED").map(_.toFloat)
 		    , externalClock = optText(c\"EXTERNAL_CLOCK").map(_.toFloat)
@@ -665,6 +672,7 @@ class FusionReportUnmarshaller(
 		    , family        = optText(c\"FAMILY"\"NUMBER").map(_.toInt)
 		    , familyName    = optText(c\"FAMILY"\"NAME")
 			) )
+    }
   }
 
   def processEnvironmentVariable(ev : NodeSeq) : Option[EnvironmentVariable] = {
@@ -780,18 +788,25 @@ class FusionReportUnmarshaller(
 
     (Seq[RegisteredUser]() /: (reguser\"REGISTEREDUSER")) {
       ( acc : Seq[RegisteredUser],  reguser : NodeSeq) =>
-	val user = RegisteredUser(
-			name = optText(reguser\"NAME").get
-			, uid  = optText(reguser\"UID").map(_.toInt)
-			, gid  = optText(reguser\"UID").map(_.toInt)
-			, realname =  optText(reguser\"UID")
-			, expirationDate = optText(reguser\"EXPIRATION_DATE").map(DateTime.parse)
-			, passord = processPassword(reguser\"PASSWORD")
-			, homeDir = optText(reguser\"HOMEDIR")
-			, commandInterpreter = optText(reguser\"COMMAND_INTERPRETER")
-			, realm = optText(reguser\"STARTED")
-		)
-		user +: acc
+      optText(reguser\"NAME") match {
+        case None =>
+          logger.debug("Ignoring entry User because tag NAME is empty")
+          logger.debug(reguser)
+          acc
+        case Some(name) =>
+          val user = RegisteredUser(
+              name = name
+              , uid  = optText(reguser\"UID").map(_.toInt)
+              , gid  = optText(reguser\"UID").map(_.toInt)
+              , realname =  optText(reguser\"UID")
+              , expirationDate = optText(reguser\"EXPIRATION_DATE").map(DateTime.parse)
+              , passord = processPassword(reguser\"PASSWORD")
+              , homeDir = optText(reguser\"HOMEDIR")
+              , commandInterpreter = optText(reguser\"COMMAND_INTERPRETER")
+              , realm = optText(reguser\"STARTED")
+          )
+          user +: acc
+        }
     }
   }
   def processAccessLog (accessLog : NodeSeq) : Option[DateTime] = {
