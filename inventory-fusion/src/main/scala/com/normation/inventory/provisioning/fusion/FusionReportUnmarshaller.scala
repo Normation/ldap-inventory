@@ -113,12 +113,13 @@ class FusionReportUnmarshaller(
       //idems for VMs and applications
       val vms = List[MachineInventory]()
       val applications =  List[Software]()
-  
+      val version=  None;
      InventoryReport(
         reportName,
         deviceId, 
         node,
         machine,
+        version,
         vms.toSeq,
         applications,
         doc
@@ -132,20 +133,22 @@ class FusionReportUnmarshaller(
      */
     for(e <- (doc \\ "REQUEST").head.child) { e.label match {
       case "CONTENT" => for( elt <- e.head.child ) { elt.label match {
-        case "ACCESSLOG" => //TODO not sure about that
+        case "ACCESSLOG" =>  report.copy ( node = report.node.copy( inventoryDate = processAccessLog(elt) ) ) 
         case "BATTERIES" => //TODO not sure about that
         case "BIOS" => processBios(elt).foreach { x => report = report.copy( machine = report.machine.copy( bios = x +: report.machine.bios ) ) }
         case "CONTROLLERS" => processController(elt).foreach { x => report = report.copy( machine = report.machine.copy( controllers = x +: report.machine.controllers ) ) }
-        case "CPUS" => //ignore, because not always relevant
+        case "CPUS" => processCpu(elt).foreach { x => report = report.copy( machine = report.machine.copy( cpus = x +: report.machine.cpus ) ) }
         case "DRIVES" => processFileSystem(elt).foreach { x => report = report.copy( node = report.node.copy( fileSystems = x +: report.node.fileSystems ) ) }
-        case "ENVS" => //TODO environment variable. Interesting.
+        case "ENVS" => processEnvironmentVariable(elt).foreach {x => report = report.copy(node = report.node.copy (environmentVariables = x +: report.node.environmentVariables ) ) }
         case "HARDWARE" => report = processHardware(elt, report)
         case "OPERATINGSYSTEM" => report = processOsDetails(elt, report, e)
         case "INPUTS" => //TODO keyborad, mouse, speakers
         case "MEMORIES" => processMemory(elt).foreach { x => report = report.copy( machine = report.machine.copy( memories = x +: report.machine.memories ) ) }
         case "NETWORKS" => processNetworks(elt).foreach { x => report = report.copy( node = report.node.copy( networks = x +: report.node.networks ) ) }
         case "PORTS" => processPort(elt).foreach { x => report = report.copy( machine = report.machine.copy( ports = x +: report.machine.ports ) ) }
-        case "PROCESSES" => //TODO list of processes running, but not sure about the command used to get them.
+        case "PROCESSES" => processProcesses(elt).foreach { x => report = report.copy( node = report.node.copy ( processes = x +: report.node.processes))}
+        case "REGISTEREDUSERS" => processRegisteredUsers(elt).foreach {x => report = report.copy( node = report.node.copy ( registeredUsers = x  +: report.node.registeredUsers) ) } 
+        case "RUDDER" => processRudder(elt)
         case "SLOTS" => processSlot(elt).foreach { x => report = report.copy( machine = report.machine.copy( slots = x +: report.machine.slots ) ) }
         case "SOFTWARES" => report = report.copy( applications  = processSoftware(elt) +: report.applications )
         case "SOUNDS" => processSound(elt).foreach { x => report = report.copy( machine = report.machine.copy( sounds = x +: report.machine.sounds ) ) }
@@ -153,7 +156,8 @@ class FusionReportUnmarshaller(
         case "USBDEVICES" => //TODO only digits for them, not sure we want to keep that as it is. 
         case "USERS" => //TODO Not sure what is it (only one login ? a logged user ?)
         case "VIDEOS" => processVideo(elt).foreach { x => report = report.copy( machine = report.machine.copy( videos = x +: report.machine.videos ) ) }
-        case "VERSIONCLIENT" => //TODO: fusion inventory agent version
+        case "VIRTUALMACHINES" => processVms(elt).foreach { x => report = report.copy(node  = report.node.copy( vms = x +: report.node.vms) ) }       
+        case "VERSIONCLIENT" => report = report.copy( version = optText(elt))
         case x => 
           contentParsingExtensions.find {
             pf => pf.isDefinedAt(e,report)
@@ -174,7 +178,6 @@ class FusionReportUnmarshaller(
        //add all VMs and software ids to node
       node = report.node.copy( 
           softwareIds = report.applications.map( _.id ) 
-        , hostedVmIds = report.vms.map( vm => ( vm.id, vm.status ) )
       )
     )
     
@@ -299,6 +302,7 @@ class FusionReportUnmarshaller(
       , swap = optText(xml\\"SWAP").map(m=> MemorySize(m + swapUnit))
       , archDescription = optText(xml\\"ARCHNAME")
       , lastLoggedUser = optText(xml\\"LASTLOGGEDUSER")
+      , machineId = Some((MachineUuid(optText(xml\\"UUID").get),PendingInventory))
       , lastLoggedUserTime = try {
           optText(xml\\"DATELASTLOGGEDUSER").map(date => userLoginDateTimeFormat.parseDateTime(date) )
         } catch {
@@ -638,34 +642,157 @@ class FusionReportUnmarshaller(
         logger.debug(v)
         None 
       case Some(name) => Some( Video(
-          name = name
+          name        = name
         , description = None
-        , chipset = optText(v\"CHIPSET")
-        , memory = optText(v\"MEMORY").map(s => MemorySize(s + "Mo"))
-        , resolution = optText(v\"RESOLUTION")
+        , chipset     = optText(v\"CHIPSET")
+        , memory      = optText(v\"MEMORY").map(s => MemorySize(s + "Mo"))
+        , resolution  = optText(v\"RESOLUTION")
         ) )
     }
   }
-  
-  def processVms(nodes : NodeSeq) : Seq[MachineInventory] = {
-    logger.warn("VMs are not processed from inventory. Ignoring nodes: %s".format(nodes))
-    Seq()
-//    for {
-//      v <- (nodes \ "VM").toSeq 
-//    } yield {
-//      val vm = MachineEntry.vm(None)
-//      //if there is a more precise type for the vm, update the info
-//      v.attribute("type") foreach { x =>
-//        x.toString.toLowerCase match {
-//          case "vbox" => vm.machineType = Some(VirtualMachineType(VirtualBox))
-//          case "vmware" => vm.machineType = Some(VirtualMachineType(VMWare))
-//          case "xen" => vm.machineType = Some(VirtualMachineType(Xen))
-//          case _ => //nothing more
-//        }
-//      }
-//      vm.name = optText(v\"NAME")
-//      vm.mbUuid = optText(v\"UUID").map(x => new MotherBoardUuid(x))
-//      vm
-//    }
+  def processCpu(c : NodeSeq) : Option[CPU] = {
+    Some( CPU (
+    	  manufacturer  = optText(c\"MANUFACTURER")
+    	, name          = optText(c\"NAME")
+    	, speed         = optText(c\"SPEED").map(_.toFloat)
+    	, externalClock = optText(c\"EXTERNAL_CLOCK").map(_.toFloat)
+    	, core          = optText(c\"CORE").map(_.toInt)
+       	, thread        = optText(c\"THREAD").map(_.toInt)
+    	, cpuid         = optText(c\"ID")
+    	, stepping      = optText(c\"STEPPING").map(_.toInt)
+    	, model         = optText(c\"MODEL").map(_.toInt)
+    	, family        = optText(c\"FAMILY"\"NUMBER").map(_.toInt)
+    	, familyName    = optText(c\"FAMILY"\"NAME")
+    	) )
   }
+  
+  def processEnvironmentVariable(ev : NodeSeq) : Option[EnvironmentVariable] = {
+    optText(ev\"KEY")	match {
+      	case None => 
+      		logger.debug("Ignoring entry Envs because tag KEY is empty")
+      		logger.debug(ev)
+      		None 
+      	case Some(key) => Some ( EnvironmentVariable (
+      	   name = key
+      	 , value = optText(ev\"VAL").get
+       	 ) )
+    }
+  }
+  def processVms(vm : NodeSeq) : Option[VirtualMachine] = {
+	  optText(vm\"VMTYPE") match {
+      	case None => 
+      		logger.debug("Ignoring entry VirtualMachine because tag VMTYPE is empty")
+      		logger.debug(vm)
+      		None 
+      	case Some(vmtype) => Some( VirtualMachine (
+          vmtype    = vmtype
+        , subsystem = optText(vm\"SUBSYSTEM")
+        , owner     = optText(vm\"OWNER")
+        , name      = optText(vm\"NAME")
+        , status    = optText(vm\"STATUS")
+        , vcpu      = optText(vm\"VCPU").map(_.toInt)
+        , memory    = optText(vm\"MEMORY")
+        , uuid      = optText(vm\"UUID")
+    	) )
+	  }
+  }
+  
+  def processProcesses(proc : NodeSeq) : Option[Process] = {
+	  	optText(proc\"CMD") match {
+      	case None => 
+      		logger.debug("Ignoring entry Process because tag CMD is empty")
+      		logger.debug(proc)
+      		None 
+      	case Some(cmd) => Some ( Process(
+      	  commandName   = cmd
+      	, cpuUsage      = optText(proc\"CPUUSAGE").map(_.toFloat)
+      	, memory        = optText(proc\"MEMORY").map(_.toFloat)
+      	, pid           = optText(proc\"PID").map(_.toInt)
+      	, started       = optText(proc\"STARTED").map(DateTime.parse)
+      	, tty           = optText(proc\"TTY")
+      	, user          = optText(proc\"USER")
+      	, virtualMemory = optText(proc\"VIRTUALMEMORY").map(_.toInt)
+      	) )
+	  	}
+  }
+  
+  
+  def processAgent (ag : NodeSeq): Seq[Agent] = {
+    val agents:Seq[Agent] = Seq()
+	ag.foreach 
+		{ agent =>
+			optText(agent\"NAME") match {
+			case None => 
+      			logger.debug("Ignoring entry Agent because tag NAME is empty")
+      			logger.debug(agent)      		
+			case Some(name) =>  
+      				Agent (
+      					name                 = name,
+      					policyServerHostname = optText(agent\"POLICY_SERVER_HOSTNAME"),
+      					policyServerUUID     = optText(agent\"POLICY_SERVER_UUID"),
+      					cfengineKey          = optText(agent\"CFENGINE_KEY"),
+      					owner                = optText(agent\"OWNER")   
+					) +: agents      	
+      	}
+      	
+	  	}
+  	agents
+  }
+  def processRudder(rud : NodeSeq) : Option[Rudder] = {
+    
+    
+      	optText(rud\"UUID") match {
+      	case None => 
+      		logger.debug("Ignoring entry Rudder because tag UUID is empty")
+      		logger.debug(rud)
+      		None 
+      	case Some(uuid) => Some ( Rudder(
+      	  uuid = uuid,
+      	  agents = processAgent(rud\"AGENT")
+      	) )
+	  	}
+  }
+  
+  
+  def processRegisteredUsers (reguser: NodeSeq) : Seq[RegisteredUser] = {
+    def processPassword (pass : NodeSeq):Option[Password] = {
+      	optText(pass\"PASSWORD_AGE") match {
+      	case None => 
+      		logger.debug("Ignoring entry PassWord because tag PASSWORD_AGE is empty")
+      		logger.debug(pass)
+      		None 
+      	case Some(age) => Some ( Password(
+      			age = age.toInt
+      			, maximumAge = optText(pass\"MAXIMUM_AGE").map(_.toInt)
+      			, minimumAge = optText(pass\"MINIMUM_AGE").map(_.toInt)
+      			, warningPeriod = optText(pass\"WARNING_PERIOD").map(_.toInt)
+      			, inactivityPeriod = optText(pass\"INACTOVITY_PERIOD").map(_.toInt)
+      	) )
+	  	}
+    }
+    (Seq[RegisteredUser]() /: (reguser\"REGISTEREDUSER")) {  (acc : Seq[RegisteredUser],  reguser : NodeSeq) => 
+    val user = RegisteredUser( 
+          name = optText(reguser\"NAME").get
+        , uid  = optText(reguser\"UID").map(_.toInt)
+        , gid  = optText(reguser\"UID").map(_.toInt)
+        , realname =  optText(reguser\"UID") 
+        , expirationDate = optText(reguser\"EXPIRATION_DATE").map(DateTime.parse)
+        , passord = processPassword(reguser\"PASSWORD")
+        , homeDir = optText(reguser\"HOMEDIR")
+        , commandInterpreter = optText(reguser\"COMMAND_INTERPRETER")
+        , realm = optText(reguser\"STARTED")
+        )  
+        user +: acc
+        
+    }
+  }
+  def processAccessLog (accessLog : NodeSeq) : Option[DateTime] = {
+	 optText(accessLog\"LOGDATE") match {
+	   case None => None;
+	   case Some(date) => Some(DateTime.parse(date))
+	 }
+  }
+  
+  
+  
 }
