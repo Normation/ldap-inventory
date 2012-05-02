@@ -61,7 +61,7 @@ case class Controller(
 
 case class CPU (
     manufacturer : Option[String],
-    name : Option[String],  
+    name : Option[String],
     description:Option[String] = None,
     speed : Option[Float],
     externalClock : Option[Float],

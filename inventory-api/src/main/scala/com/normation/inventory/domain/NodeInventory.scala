@@ -48,7 +48,7 @@ sealed trait NodeElement {
 }
 
 case class FileSystem(
-  mountPoint  : String, 
+  mountPoint  : String,
   name        : Option[String] = None,
   description : Option[String] = None,
   fileCount   : Option[Int] = None,
@@ -110,13 +110,13 @@ case class RegisteredUser (
     name               : String,
     uid                : Option[Int],
     gid                : Option[Int],
-    realname           : Option[String], 
+    realname           : Option[String],
     expirationDate     : Option[DateTime],
     passord            : Option[Password],
     homeDir            : Option[String],
     commandInterpreter : Option[String],
-    realm              : Option[String], 
-   	description        : Option[String] = None
+    realm              : Option[String],
+    description        : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
 case class Agent (
@@ -125,7 +125,6 @@ case class Agent (
 	policyServerUUID     : Option[String],
 	cfengineKey          : Option[String],
 	owner                : Option[String]
-	
 )
 
 case class Rudder (
@@ -218,7 +217,7 @@ case class Linux(
     override val os            : OsType
   , override val fullName      : String
   , override val version       : Version
-  , override val servicePack   : Option[String] 
+  , override val servicePack   : Option[String]
   , override val kernelVersion : Version
 ) extends OsDetails(os, fullName, version, servicePack, kernelVersion) with HashcodeCaching
 
@@ -226,7 +225,7 @@ case class Windows(
     override val os            : OsType
   , override val fullName      : String
   , override val version       : Version
-  , override val servicePack   : Option[String] 
+  , override val servicePack   : Option[String]
   , override val kernelVersion : Version
   , userDomain                 : Option[String] = None
   , registrationCompany        : Option[String] = None
@@ -236,7 +235,7 @@ case class Windows(
 
 
 case class NodeSummary(
-  id             : NodeId, 
+  id             : NodeId,
   status         : InventoryStatus,
   rootUser       : String,
   hostname       : String,
@@ -250,7 +249,7 @@ case class NodeInventory(
   main:NodeSummary,
   //not sure we want to keep that
   name                 : Option[String] = None,
-  description          : Option[String] = None,  
+  description          : Option[String] = None,
   ram                  : Option[MemorySize] = None,
   swap                 : Option[MemorySize] = None,
   inventoryDate        : Option[DateTime] = None,
