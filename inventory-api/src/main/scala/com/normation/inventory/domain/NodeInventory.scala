@@ -87,15 +87,15 @@ case class Process (
 )extends NodeElement with HashcodeCaching
 
 case class VirtualMachine (
-    vmtype      : String
+    vmtype      : Option[String]
   , subsystem   : Option[String]
   , owner       : Option[String]
   , name        : Option[String]
   , status      : Option[String]
   , vcpu        : Option[Int]
   , memory      : Option[String]
-  , uuid        : Option[String]
-  // TODO : Maybe add an inventoryStatus field
+  , uuid        : NodeId
+    // TODO : Maybe add an inventoryStatus field
   , description : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
@@ -124,14 +124,14 @@ case class RegisteredUser (
 case class Agent (
     name                 : String
 	, policyServerHostname : Option[String]
-	, policyServerUUID     : Option[String]
+	, policyServerUUID     : Option[NodeId]
 	, cfengineKey          : Option[String]
 	, owner                : Option[String]
 )
 
 case class Rudder (
     agents      : Seq[Agent]
-  , uuid        : String
+  , uuid        : NodeId
 	, description : Option[String] = None
 )extends NodeElement with HashcodeCaching
 
