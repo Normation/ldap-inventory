@@ -125,7 +125,10 @@ class FusionReportUnmarshaller(
         doc
       )
     }
-     
+     /*
+      * 
+      * TODO : Here fiend fusion agent version 
+      */
      
     /*
      * and now, actually parse !
@@ -137,7 +140,7 @@ class FusionReportUnmarshaller(
         case "BATTERIES" => //TODO not sure about that
         case "BIOS" => processBios(elt).foreach { x => report = report.copy( machine = report.machine.copy( bios = x +: report.machine.bios ) ) }
         case "CONTROLLERS" => processController(elt).foreach { x => report = report.copy( machine = report.machine.copy( controllers = x +: report.machine.controllers ) ) }
-        case "CPUS" => processCpu(elt).foreach { x => report = report.copy( machine = report.machine.copy( cpus = x +: report.machine.cpus ) ) }
+        case "CPUS" => processCpu(elt).foreach { x => report = report.copy( machine = report.machine.copy( processors = x +: report.machine.processors ) ) }
         case "DRIVES" => processFileSystem(elt).foreach { x => report = report.copy( node = report.node.copy( fileSystems = x +: report.node.fileSystems ) ) }
         case "ENVS" => processEnvironmentVariable(elt).foreach {x => report = report.copy(node = report.node.copy (environmentVariables = x +: report.node.environmentVariables ) ) }
         case "HARDWARE" => report = processHardware(elt, report)
@@ -157,7 +160,7 @@ class FusionReportUnmarshaller(
         case "USERS" => //TODO Not sure what is it (only one login ? a logged user ?)
         case "VIDEOS" => processVideo(elt).foreach { x => report = report.copy( machine = report.machine.copy( videos = x +: report.machine.videos ) ) }
         case "VIRTUALMACHINES" => processVms(elt).foreach { x => report = report.copy(node  = report.node.copy( vms = x +: report.node.vms) ) }
-        case "VERSIONCLIENT" => report = report.copy( version = optText(elt))
+        case "VERSIONCLIENT" => report = report.copy( version = processVersion(elt)) 
         case x => 
           contentParsingExtensions.find {
             pf => pf.isDefinedAt(e,report)
@@ -650,55 +653,55 @@ class FusionReportUnmarshaller(
         ) )
     }
   }
-  def processCpu(c : NodeSeq) : Option[CPU] = {
-    (optText(c\"MANUFACTURER"),optText(c\"ARCH")) match{
-      case (None,None) =>
+  def processCpu(c : NodeSeq) : Option[Processor] = {
+    (optText(c\"NAME") match{
+      case None =>
         logger.debug("Ignoring entry CPU because tag MANIFACTURER and ARCH are empty")
         logger.debug(c)
         None
-      case (_,_) =>
+      case Some(name) =>
         Some (
-            CPU (
-		    manufacturer    = optText(c\"MANUFACTURER")
-		    , arch          = optText(c\"ARCH")
-		    , name          = optText(c\"NAME")
-		    , speed         = optText(c\"SPEED").map(_.toFloat)
-		    , externalClock = optText(c\"EXTERNAL_CLOCK").map(_.toFloat)
-		    , core          = optText(c\"CORE").map(_.toInt)
-		    , thread        = optText(c\"THREAD").map(_.toInt)
-		    , cpuid         = optText(c\"ID")
-		    , stepping      = optText(c\"STEPPING").map(_.toInt)
-		    , model         = optText(c\"MODEL").map(_.toInt)
-		    , family        = optText(c\"FAMILY"\"NUMBER").map(_.toInt)
-		    , familyName    = optText(c\"FAMILY"\"NAME")
-			) )
+            Processor (
+                manufacturer    = optText(c\"MANUFACTURER")
+                , arch          = optText(c\"ARCH")
+                , name          = name
+                , speed         = optText(c\"SPEED").map(_.toFloat)
+                , externalClock = optText(c\"EXTERNAL_CLOCK").map(_.toFloat)
+                , core          = optText(c\"CORE").map(_.toInt)
+                , thread        = optText(c\"THREAD").map(_.toInt)
+                , cpuid         = optText(c\"ID")
+                , stepping      = optText(c\"STEPPING").map(_.toInt)
+                , model         = optText(c\"MODEL").map(_.toInt)
+                , family        = optText(c\"FAMILY"\"NUMBER").map(_.toInt)
+                , familyName    = optText(c\"FAMILY"\"NAME")
+                ) )
     }
   }
 
   def processEnvironmentVariable(ev : NodeSeq) : Option[EnvironmentVariable] = {
     optText(ev\"KEY")	match {
     case None =>
-    logger.debug("Ignoring entry Envs because tag KEY is empty")
-    logger.debug(ev)
-    None
+      logger.debug("Ignoring entry Envs because tag KEY is empty")
+      logger.debug(ev)
+      None
     case Some(key) =>
-    Some (
-		EnvironmentVariable (
-		    name = key
-		    , value = optText(ev\"VAL").get
-			) )
+      Some (
+          EnvironmentVariable (
+              name = key
+              , value = optText(ev\"VAL").get
+              ) )
     }
   }
 
   def processVms(vm : NodeSeq) : Option[VirtualMachine] = {
 	  optText(vm\"VMTYPE") match {
 	  case None =>
-	  logger.debug("Ignoring entry VirtualMachine because tag VMTYPE is empty")
-	  logger.debug(vm)
-	  None
+	    logger.debug("Ignoring entry VirtualMachine because tag VMTYPE is empty")
+	    logger.debug(vm)
+	    None
 	  case Some(vmtype) => Some(
 	      VirtualMachine (
-	          vmtype    = vmtype
+	            vmtype    = vmtype
 	          , subsystem = optText(vm\"SUBSYSTEM")
 	          , owner     = optText(vm\"OWNER")
 	          , name      = optText(vm\"NAME")
@@ -706,54 +709,54 @@ class FusionReportUnmarshaller(
 	          , vcpu      = optText(vm\"VCPU").map(_.toInt)
 	          , memory    = optText(vm\"MEMORY")
 	          , uuid      = optText(vm\"UUID")
-			  ) )
+	          ) )
 	  }
   }
 
   def processProcesses(proc : NodeSeq) : Option[Process] = {
 	  optText(proc\"CMD") match {
 	  case None =>
-	  logger.debug("Ignoring entry Process because tag CMD is empty")
-	  logger.debug(proc)
-	  None
+	    logger.debug("Ignoring entry Process because tag CMD is empty")
+	    logger.debug(proc)
+	    None
 	  case Some(cmd) =>
 	    Some (
 	      Process(
-			  commandName   = cmd
-			  , cpuUsage      = optText(proc\"CPUUSAGE").map(_.toFloat)
-			  , memory        = optText(proc\"MEMORY").map(_.toFloat)
-			  , pid           = optText(proc\"PID").map(_.toInt)
-			  , started       = optText(proc\"STARTED").map(DateTime.parse)
-			  , tty           = optText(proc\"TTY")
-			  , user          = optText(proc\"USER")
-			  , virtualMemory = optText(proc\"VIRTUALMEMORY").map(_.toInt)
-	    ) )
+	            commandName   = cmd
+	          , cpuUsage      = optText(proc\"CPUUSAGE").map(_.toFloat)
+	          , memory        = optText(proc\"MEMORY").map(_.toFloat)
+	          , pid           = optText(proc\"PID").map(_.toInt)
+	          , started       = optText(proc\"STARTED").map(DateTime.parse)
+	          , tty           = optText(proc\"TTY")
+	          , user          = optText(proc\"USER")
+	          , virtualMemory = optText(proc\"VIRTUALMEMORY").map(_.toInt)
+	          ) )
 	  }
   }
 
   def processAgent (ag : NodeSeq): Seq[Agent] = {
     val agents:Seq[Agent] = Seq()
-	ag.foreach { agent =>
-	  optText(agent\"NAME") match {
-	     case None =>
-	         logger.debug("Ignoring entry Agent because tag NAME is empty")
-	         logger.debug(agent)
-             agents
-	     case Some(name) =>
-	         Agent (
-	             name = name,
-	             policyServerHostname = optText(agent\"POLICY_SERVER_HOSTNAME"),
-	             policyServerUUID     = optText(agent\"POLICY_SERVER_UUID"),
-	             cfengineKey          = optText(agent\"CFENGINE_KEY"),
-	             owner                = optText(agent\"OWNER")
-	        ) +: agents
-	  }
+    ag.foreach { agent =>
+      optText(agent\"NAME") match {
+      case None =>
+        logger.debug("Ignoring entry Agent because tag NAME is empty")
+        logger.debug(agent)
+        agents
+      case Some(name) =>
+        Agent (
+              name = name
+            , policyServerHostname = optText(agent\"POLICY_SERVER_HOSTNAME")
+            , policyServerUUID     = optText(agent\"POLICY_SERVER_UUID")
+            , cfengineKey          = optText(agent\"CFENGINE_KEY")
+            , owner                = optText(agent\"OWNER")
+            ) +: agents
+      }
     }
-  agents
+    agents
   }
 
   def processRudder(rud : NodeSeq) : Option[Rudder] = {
-	  optText(rud\"UUID") match {
+    optText(rud\"UUID") match {
 		case None =>
 			logger.debug("Ignoring entry Rudder because tag UUID is empty")
 			logger.debug(rud)
@@ -763,39 +766,39 @@ class FusionReportUnmarshaller(
 				Rudder (
 					uuid = uuid,
 					agents = processAgent(rud\"AGENT")
-				) )
+				  ) )
 	  }
   }
 
   def processRegisteredUsers (reguser: NodeSeq) : Seq[RegisteredUser] = {
     def processPassword (pass : NodeSeq):Option[Password] = {
-	optText(pass\"PASSWORD_AGE") match {
-		case None =>
-			logger.debug("Ignoring entry PassWord because tag PASSWORD_AGE is empty")
-			logger.debug(pass)
-			None
-		case Some(age) =>
-			Some (
-				Password (
-					age = age.toInt
-					, maximumAge = optText(pass\"MAXIMUM_AGE").map(_.toInt)
-					, minimumAge = optText(pass\"MINIMUM_AGE").map(_.toInt)
-					, warningPeriod = optText(pass\"WARNING_PERIOD").map(_.toInt)
-					, inactivityPeriod = optText(pass\"INACTOVITY_PERIOD").map(_.toInt)
-			) )
-	}
+      optText(pass\"PASSWORD_AGE") match {
+        case None =>
+          logger.debug("Ignoring entry PassWord because tag PASSWORD_AGE is empty")
+          logger.debug(pass)
+          None
+        case Some(age) =>
+          Some (
+              Password (
+                    age = Some(age.toInt)
+                  , maximumAge = optText(pass\"MAXIMUM_AGE").map(_.toInt)
+                  , minimumAge = optText(pass\"MINIMUM_AGE").map(_.toInt)
+                  , warningPeriod = optText(pass\"WARNING_PERIOD").map(_.toInt)
+                  , inactivityPeriod = optText(pass\"INACTOVITY_PERIOD").map(_.toInt)
+                  ) )
+      }
     }
 
     (Seq[RegisteredUser]() /: (reguser\"REGISTEREDUSER")) {
       ( acc : Seq[RegisteredUser],  reguser : NodeSeq) =>
-      optText(reguser\"NAME") match {
-        case None =>
-          logger.debug("Ignoring entry User because tag NAME is empty")
-          logger.debug(reguser)
-          acc
-        case Some(name) =>
-          val user = RegisteredUser(
-              name = name
+        optText(reguser\"NAME") match {
+          case None =>
+            logger.debug("Ignoring entry User because tag NAME is empty")
+            logger.debug(reguser)
+            acc
+          case Some(name) =>
+            val user = RegisteredUser (
+                name = name
               , uid  = optText(reguser\"UID").map(_.toInt)
               , gid  = optText(reguser\"UID").map(_.toInt)
               , realname =  optText(reguser\"UID")
@@ -804,11 +807,12 @@ class FusionReportUnmarshaller(
               , homeDir = optText(reguser\"HOMEDIR")
               , commandInterpreter = optText(reguser\"COMMAND_INTERPRETER")
               , realm = optText(reguser\"STARTED")
-          )
-          user +: acc
+                )
+                user +: acc
         }
     }
   }
+
   def processAccessLog (accessLog : NodeSeq) : Option[DateTime] = {
 	 optText(accessLog\"LOGDATE") match {
 	   case None => None;
@@ -816,4 +820,10 @@ class FusionReportUnmarshaller(
 	 }
   }
 
+   def processVersion (vers : NodeSeq) : Option[Version] = {
+   optText(vers) match {
+     case None => None;
+     case Some(vers) => Some(new Version(vers))
+   }
+  }
 }

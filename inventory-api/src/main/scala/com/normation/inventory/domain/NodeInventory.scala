@@ -48,95 +48,97 @@ sealed trait NodeElement {
 }
 
 case class FileSystem(
-  mountPoint  : String,
-  name        : Option[String] = None,
-  description : Option[String] = None,
-  fileCount   : Option[Int] = None,
-  freeSpace   : Option[MemorySize] = None,
-  totalSpace  : Option[MemorySize] = None
+    mountPoint  : String
+  , name        : Option[String] = None
+  , description : Option[String] = None
+  , fileCount   : Option[Int] = None
+  , freeSpace   : Option[MemorySize] = None
+  , totalSpace  : Option[MemorySize] = None
 ) extends NodeElement with HashcodeCaching
 
 
 case class Network (
-  name        : String,
-  description : Option[String] = None,
-  ifAddresses : Seq[InetAddress] = Seq(),
-  ifDhcp      : Option[InetAddress] = None,
-  ifGateway   : Option[InetAddress] = None,
-  ifMask      : Option[InetAddress] = None,
-  ifSubnet    : Option[InetAddress] = None,
-  macAddress  : Option[String] = None,
-  status      : Option[String] = None,
-  ifType      : Option[String] = None,
-  speed       : Option[String] = None,
-  typeMib     : Option[String] = None
+    name        : String
+  , description : Option[String] = None
+  , ifAddresses : Seq[InetAddress] = Seq()
+  , ifDhcp      : Option[InetAddress] = None
+  , ifGateway   : Option[InetAddress] = None
+  , ifMask      : Option[InetAddress] = None
+  , ifSubnet    : Option[InetAddress] = None
+  , macAddress  : Option[String] = None
+  , status      : Option[String] = None
+  , ifType      : Option[String] = None
+  , speed       : Option[String] = None
+  , typeMib     : Option[String] = None
 ) extends NodeElement with HashcodeCaching {
   def ifAddress : Option[InetAddress] = ifAddresses.headOption
 }
 
 case class Process (
-		commandName   : String,
-		cpuUsage      : Option[Float],
-		memory        : Option[Float],
-		pid           : Option[Int],
-		started       : Option[DateTime],
-		tty           : Option[String],
-		user          : Option[String],
-		virtualMemory : Option[Int],
-		description   : Option[String] = None
+		commandName   : String
+	, cpuUsage      : Option[Float] = None
+	, memory        : Option[Float] = None
+	, pid           : Option[Int] = None
+	, started       : Option[DateTime] = None
+	, tty           : Option[String] = None
+	, user          : Option[String] = None
+	, virtualMemory : Option[Int] = None
+	, description   : Option[String] = None
 )extends NodeElement with HashcodeCaching
 
 case class VirtualMachine (
-    vmtype      : String,
-    subsystem   : Option[String],
-    owner       : Option[String],
-    name        : Option[String],
-    status      : Option[String],
-    vcpu        : Option[Int],
-    memory      : Option[String],
-    uuid        : Option[String],
-    description : Option[String] = None
+    vmtype      : String
+  , subsystem   : Option[String]
+  , owner       : Option[String]
+  , name        : Option[String]
+  , status      : Option[String]
+  , vcpu        : Option[Int]
+  , memory      : Option[String]
+  , uuid        : Option[String]
+  // TODO : Maybe add an inventoryStatus field
+  , description : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
 
 case class Password (
-    age              : Int,
-    minimumAge       : Option[Int],
-    maximumAge       : Option[Int],
-    warningPeriod    : Option[Int],
-    inactivityPeriod : Option[Int]
+    age              : Option[Int]
+  , minimumAge       : Option[Int]
+  , maximumAge       : Option[Int]
+  , warningPeriod    : Option[Int]
+  , inactivityPeriod : Option[Int]
     )
+    
 case class RegisteredUser (
-    name               : String,
-    uid                : Option[Int],
-    gid                : Option[Int],
-    realname           : Option[String],
-    expirationDate     : Option[DateTime],
-    passord            : Option[Password],
-    homeDir            : Option[String],
-    commandInterpreter : Option[String],
-    realm              : Option[String],
-    description        : Option[String] = None
+    name               : String
+  , uid                : Option[Int]
+  , gid                : Option[Int]
+  , realname           : Option[String]
+  , expirationDate     : Option[DateTime]
+  , passord            : Option[Password]
+  , homeDir            : Option[String]
+  , commandInterpreter : Option[String]
+  , realm              : Option[String]
+  , description        : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
 case class Agent (
-	name                 : String,
-	policyServerHostname : Option[String],
-	policyServerUUID     : Option[String],
-	cfengineKey          : Option[String],
-	owner                : Option[String]
+    name                 : String
+	, policyServerHostname : Option[String]
+	, policyServerUUID     : Option[String]
+	, cfengineKey          : Option[String]
+	, owner                : Option[String]
 )
 
 case class Rudder (
-    agents      : Seq[Agent],
-    uuid        : String,
-	description : Option[String] = None
+    agents      : Seq[Agent]
+  , uuid        : String
+	, description : Option[String] = None
 )extends NodeElement with HashcodeCaching
 
 case class EnvironmentVariable (
-  name        : String,
-  value       : String,
-  description : Option[String] = None
+    name        : String
+  , value       : String
+  , description : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
 object InetAddressUtils {
@@ -181,13 +183,13 @@ sealed abstract class LinuxType extends OsType {
   override val kernelName = "Linux"
 }
 
-case object UnknownLinuxType extends LinuxType with HashcodeCaching { val name = "Linux" }
+case object UnknownLinuxType extends LinuxType with HashcodeCaching { val name = "Linux"  }
 case object Debian extends LinuxType with HashcodeCaching           { val name = "Debian" }
 case object Ubuntu extends LinuxType with HashcodeCaching           { val name = "Ubuntu" }
 case object Redhat extends LinuxType with HashcodeCaching           { val name = "Redhat" }
 case object Centos extends LinuxType with HashcodeCaching           { val name = "Centos" }
 case object Fedora extends LinuxType with HashcodeCaching           { val name = "Fedora" }
-case object Suse extends LinuxType with HashcodeCaching             { val name = "Suse" }
+case object Suse   extends LinuxType with HashcodeCaching           { val name = "Suse"   }
 
 /**
  * The different OS type. For now, we know
@@ -235,40 +237,40 @@ case class Windows(
 
 
 case class NodeSummary(
-  id             : NodeId,
-  status         : InventoryStatus,
-  rootUser       : String,
-  hostname       : String,
-  osDetails      : OsDetails,
-  policyServerId : NodeId
+    id             : NodeId
+  , status         : InventoryStatus
+  , rootUser       : String
+  , hostname       : String
+  , osDetails      : OsDetails
+  , policyServerId : NodeId
   //agent name
   //ipss
 ) extends HashcodeCaching
 
 case class NodeInventory(
-  main:NodeSummary,
+    main                 : NodeSummary
   //not sure we want to keep that
-  name                 : Option[String] = None,
-  description          : Option[String] = None,
-  ram                  : Option[MemorySize] = None,
-  swap                 : Option[MemorySize] = None,
-  inventoryDate        : Option[DateTime] = None,
-  archDescription      : Option[String] = None,
-  lastLoggedUser       : Option[String] = None,
-  lastLoggedUserTime   : Option[DateTime] = None,
-  environmentVariables : Seq[EnvironmentVariable] = Seq(),
- // publicKeys           : Seq[PublicKey] = Seq(),
-  machineId            : Option[(MachineUuid,InventoryStatus)] = None, //if we want several ids, we would have to ass an "alternate machine" field
- // hostedVmIds          : Seq[(MachineUuid,InventoryStatus)] = Seq(),
-  vms                  : Seq[VirtualMachine] = Seq(),
-  softwareIds          : Seq[SoftwareUuid] = Seq(),
-  processes            : Seq[Process] = Seq(),
-  registeredUsers      : Seq[RegisteredUser] = Seq(),
-  rudder               : Option[Rudder] = None,
-  accounts             : Seq[String] = Seq(),
+  , name                 : Option[String] = None
+  , description          : Option[String] = None
+  , ram                  : Option[MemorySize] = None
+  , swap                 : Option[MemorySize] = None
+  , inventoryDate        : Option[DateTime] = None
+  , archDescription      : Option[String] = None
+  , lastLoggedUser       : Option[String] = None
+  , lastLoggedUserTime   : Option[DateTime] = None
+  , environmentVariables : Seq[EnvironmentVariable] = Seq()
+// publicKeys           : Seq[PublicKey] = Seq(),
+  , machineId            : Option[(MachineUuid,InventoryStatus)] = None //if we want several ids, we would have to ass an "alternate machine" field
+// hostedVmIds          : Seq[(MachineUuid,InventoryStatus)] = Seq(),
+  , vms                  : Seq[VirtualMachine] = Seq()
+  , softwareIds          : Seq[SoftwareUuid] = Seq()
+  , processes            : Seq[Process] = Seq()
+  , registeredUsers      : Seq[RegisteredUser] = Seq()
+  , rudder               : Option[Rudder] = None
+  , accounts             : Seq[String] = Seq()
 //  serverIps            : Seq[String] = Seq(),
-  networks             : Seq[Network] = Seq(),
-  fileSystems          : Seq[FileSystem] = Seq()
+  , networks             : Seq[Network] = Seq()
+  , fileSystems          : Seq[FileSystem] = Seq()
   //TODO: environment:Map[String,String]
 ) extends HashcodeCaching {
   
