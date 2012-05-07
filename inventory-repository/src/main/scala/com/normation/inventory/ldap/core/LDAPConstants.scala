@@ -117,6 +117,12 @@ object LDAPConstants {
   val A_PROCESSOR_SPEED = "cpuSpeed"
   val A_PROCESSOR_STEPPING = "cpuStepping"
   val A_PROCESSOR_FAMILLY = "cpuFamily"
+  val A_CORE = "cpuCore"
+  val A_THREAD = "cpuThread"
+  val A_PROCESSOR_FAMILY_NAME = "cpuFamilyName"
+  val A_PROCESSOR_ARCHITECTURE = "cpuArchitecture" 
+  val A_CPUID = "cpuID"
+  val A_EXTERNAL_CLOCK = "cpuExternalClock"
   // memory
   val A_MEMORY_SLOT_NUMBER = "memorySlotNumber"
   val A_MEMORY_CAPACITY = "memoryCapacity"

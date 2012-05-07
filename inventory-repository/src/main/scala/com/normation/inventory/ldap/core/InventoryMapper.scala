@@ -215,9 +215,15 @@ class InventoryMapper(
     e +=! (A_QUANTITY, elt.quantity.toString)
     e.setOpt(elt.speed,A_PROCESSOR_SPEED, {x:Float => x.toString})
     e.setOpt(elt.stepping,A_PROCESSOR_STEPPING, {x:Int=> x.toString})
-    e.setOpt(elt.family, A_PROCESSOR_FAMILLY, {x:String => x})
-    e.setOpt(elt.model, A_MODEL, {x:String => x})
+    e.setOpt(elt.family, A_PROCESSOR_FAMILLY, {x:Int => x.toString()})
+    e.setOpt(elt.model, A_MODEL, {x:Int => x.toString()})
     e.setOpt(elt.manufacturer, A_MANUFACTURER, {x:Manufacturer => x.name})
+    e.setOpt(elt.core, A_CORE, {x:Int => x.toString()})
+    e.setOpt(elt.thread, A_THREAD, {x:Int => x.toString()})
+    e.setOpt(elt.familyName, A_PROCESSOR_FAMILY_NAME ,{x:String => x} )
+    e.setOpt(elt.arch, A_PROCESSOR_ARCHITECTURE, {x:String => x} ) 
+    e.setOpt(elt.cpuid, A_CPUID, {x:String => x})
+    e.setOpt(elt.externalClock, A_EXTERNAL_CLOCK, {x:Float => x.toString()})
     e
   }
   
@@ -228,11 +234,17 @@ class InventoryMapper(
       quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
       speed = e.getAsFloat(A_PROCESSOR_SPEED)
       stepping = e.getAsInt(A_PROCESSOR_STEPPING)
-      family = e(A_PROCESSOR_FAMILLY)
-      model = e(A_MODEL)
+      family = e.getAsInt(A_PROCESSOR_FAMILLY)
+      model = e.getAsInt(A_MODEL)
       manufacturer = e(A_MANUFACTURER).map(m => new Manufacturer(m))
+      core = e.getAsInt(A_CORE)
+      thread = e.getAsInt(A_THREAD)
+      familyName = e(A_PROCESSOR_FAMILY_NAME)
+      arch = e(A_PROCESSOR_ARCHITECTURE)
+      externalClock = e.getAsFloat(A_EXTERNAL_CLOCK)
+      cpuid = e(A_CPUID)
     } yield {
-      Processor(name, desc, speed, stepping, model, family, manufacturer, quantity)
+      Processor(manufacturer, name, arch, desc, speed, externalClock, core, thread, cpuid, stepping, family, familyName, model, quantity)
     }
   }
   
