@@ -79,7 +79,7 @@ case class Port(
 ) extends PhysicalElement with HashcodeCaching
 
 case class Processor(
-    manufacturer  : Option[String]
+    manufacturer  : Option[Manufacturer]
   , name          : String
   , arch          : Option[String]
   , description   : Option[String] = None
@@ -90,7 +90,7 @@ case class Processor(
   , cpuid         : Option[String]
   , stepping      : Option[Int]
   , family        : Option[Int]
-  , familyName    : Option[String]
+  , familyName    : Option[String] = None
   , model         : Option[Int]
   , quantity      : Int = 1
 ) extends PhysicalElement with HashcodeCaching

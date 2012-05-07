@@ -125,7 +125,7 @@ case class Agent (
     name                 : String
 	, policyServerHostname : Option[String]
 	, policyServerUUID     : Option[NodeId]
-	, cfengineKey          : Option[String]
+	, cfengineKey          : Option[PublicKey]
 	, owner                : Option[String]
 )
 
@@ -240,9 +240,9 @@ case class NodeSummary(
     id             : NodeId
   , status         : InventoryStatus
   , rootUser       : String
-  , hostname       : String
+  //, hostname       : String
   , osDetails      : OsDetails
-  , policyServerId : NodeId
+  //, policyServerId : NodeId
   //agent name
   //ipss
 ) extends HashcodeCaching
@@ -259,16 +259,13 @@ case class NodeInventory(
   , lastLoggedUser       : Option[String] = None
   , lastLoggedUserTime   : Option[DateTime] = None
   , environmentVariables : Seq[EnvironmentVariable] = Seq()
-// publicKeys           : Seq[PublicKey] = Seq(),
   , machineId            : Option[(MachineUuid,InventoryStatus)] = None //if we want several ids, we would have to ass an "alternate machine" field
-// hostedVmIds          : Seq[(MachineUuid,InventoryStatus)] = Seq(),
   , vms                  : Seq[VirtualMachine] = Seq()
   , softwareIds          : Seq[SoftwareUuid] = Seq()
   , processes            : Seq[Process] = Seq()
   , registeredUsers      : Seq[RegisteredUser] = Seq()
   , rudder               : Option[Rudder] = None
   , accounts             : Seq[String] = Seq()
-//  serverIps            : Seq[String] = Seq(),
   , networks             : Seq[Network] = Seq()
   , fileSystems          : Seq[FileSystem] = Seq()
   //TODO: environment:Map[String,String]
