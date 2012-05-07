@@ -76,7 +76,8 @@ object RudderNodeIdParsing extends FusionReportParsingExtension {
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(id) => x._2.copy( node = x._2.node.copy ( rudder = x._2.node.rudder ) )
+      case Some(id) => x._2.copy( node = x._2.node.copy 
+          (rudder = Some(x._2.node.rudder.get.copy(uuid = new NodeId(id) ))))
     }
   }
 }
@@ -89,8 +90,12 @@ object RudderPolicyServerParsing extends FusionReportParsingExtension {
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(ps) => x._2.copy( node = x._2.node.copyWithMain { m => m.copy(policyServerId = NodeId(ps)) } )
-    }
+      case Some(ps) => x._2.copy( node = x._2.node.copy(rudder = x._2.node.rudder.flatMap
+          (rudder => Some(rudder.copy
+              (agents = rudder.agents.first.copy
+                  (policyServerUUID =Some(new NodeId( ps )))
+                  +: rudder.agents.tail)))))
+          }
   }
 }
 
@@ -143,12 +148,17 @@ object RudderCpuParsing extends FusionReportParsingExtension with Loggable {
           logger.debug(p)
         case Some(name) =>
           val cpu = Processor(
-              name = name
-            , speed = optText(p\"FREQUENCY").map(_.toFloat)
-            , model = optText(p\"MODEL")
-            , family = optText(p\"FAMILY")
-            , manufacturer = optText(p\"VENDOR") map { Manufacturer(_) }
-            , stepping = optText(p\"STEPPING") map { _.toInt }
+              manufacturer    = optText(p\"MANUFACTURER").map(new Manufacturer(_))
+              , arch          = optText(p\"ARCH")
+              , name          = name
+              , speed         = optText(p\"SPEED").map(_.toFloat)
+              , externalClock = optText(p\"EXTERNAL_CLOCK").map(_.toFloat)
+              , core          = optText(p\"CORE").map(_.toInt)
+              , thread        = optText(p\"THREAD").map(_.toInt)
+              , cpuid         = optText(p\"ID")
+              , stepping      = optText(p\"STEPPING").map(_.toInt)
+              , model         = optText(p\"MODEL").map(_.toInt)
+              , family        = optText(p\"FAMILY").map(_.toInt)
           )
           buf += cpu
       }
@@ -165,7 +175,10 @@ class RudderPublicKeyParsing(keyNormalizer:PrintedKeyNormalizer) extends FusionR
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(key) => x._2.copy( node = x._2.node.copy( publicKeys = (new PublicKey(keyNormalizer(key) ) +: x._2.node.publicKeys ) ) )
+      case Some(key) => x._2.copy( node = x._2.node.copy( rudder = x._2.node.rudder.flatMap( rudder =>
+      Some ( rudder.copy(
+            agents = rudder.agents.first.copy(cfengineKey =Some( new PublicKey(keyNormalizer(key)))) +: rudder.agents.tail
+            ) ) ) ) )
     }
   }
 }
@@ -178,7 +191,7 @@ object RudderRootUserParsing extends FusionReportParsingExtension {
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(u) => x._2.copy( node = x._2.node.copyWithMain{ m => m.copy( rootUser = u ) } )
+      case Some(u) => x._2.copy( node = x._2.node.copyWithMain(m => m.copy(rootUser = u ))  )
     }
   }
 }
@@ -191,8 +204,9 @@ object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable
   override def isDefinedAt(x:(Node,InventoryReport)) = { x._1.label == "AGENTSNAME" }
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     x._2.copy( node = x._2.node.copy( rudder = x._2.node.rudder.flatMap
-        (rudder => Some(Rudder(uuid = rudder.uuid, agents =  Agent(name = processAgentName(x._1).toString(), policyServerHostname = None, policyServerUUID = None, cfengineKey= None, owner= None) +: rudder.agents)))
-    ))
+        (rudder => Some(rudder.copy(agents =  rudder.agents.first.copy(name = processAgentName(x._1).toString()) +: rudder.agents.tail
+            ) ) ) )
+    )
   }  
   def processAgentName(xml:NodeSeq) : Seq[AgentType] = {
     (xml \ "AGENTNAME").flatMap(e => optText(e).flatMap( a => 
@@ -206,6 +220,7 @@ object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable
   }
 }
 
+/* must be removed 
 
 /**
  * <TECHNIQUES>
@@ -219,7 +234,7 @@ object RudderTechniquesParsing extends FusionReportParsingExtension {
     (xml \ "TECHNIQUE").flatMap(e => optText(e))
   }
 }
-
+*/
 /**
  * <HOSTNAME>
  */
@@ -228,7 +243,8 @@ object RudderHostnameParsing extends FusionReportParsingExtension {
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(e) => x._2.copy( node = x._2.node.copyWithMain { m => m.copy( hostname = e) } )
+      case Some(e) => x._2.copy( node = x._2.node.copy ( rudder = x._2.node.rudder.flatMap
+          (rudder => Some(rudder.copy(agents = rudder.agents.first.copy(policyServerHostname = Some(e) ) +: rudder.agents.tail ) ) ) )  )
     }
   }
 }
