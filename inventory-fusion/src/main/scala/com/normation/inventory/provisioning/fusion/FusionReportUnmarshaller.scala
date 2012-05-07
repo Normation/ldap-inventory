@@ -36,6 +36,7 @@ package com.normation.inventory.provisioning
 package fusion
 
 import com.normation.inventory.domain._
+import com.normation.inventory.provisioning.fusion._
 import java.io.InputStream
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -100,12 +101,12 @@ class FusionReportUnmarshaller(
       }
   
       //init a node inventory
-      val node = NodeInventory( NodeSummary(
+      val node = NodeInventory(NodeSummary(
           NodeId(uuidGen.newUuid), 
-          PendingInventory, "dummy-root", "dummy-hostname", 
-          UnknownOS(),
-          NodeId("dummy-policy-server")
-      ) )
+          PendingInventory, "dummy-root",
+          UnknownOS()
+         )
+      ) 
       
       //create a machine used as a template to modify
       val machine = MachineInventory(MachineUuid(uuidGen.newUuid), PendingInventory, PhysicalMachineType)
@@ -387,7 +388,7 @@ class FusionReportUnmarshaller(
       }
     }
     
-    report.copy( node = report.node.copyWithMain { m => m.copy( osDetails = osDetail ) } )
+    report.copy( node = report.node.copyWithMain(m => m.copy (osDetails = osDetail ) ) )
     
   }
   
@@ -654,7 +655,7 @@ class FusionReportUnmarshaller(
     }
   }
   def processCpu(c : NodeSeq) : Option[Processor] = {
-    (optText(c\"NAME") match{
+    optText(c\"NAME") match{
       case None =>
         logger.debug("Ignoring entry CPU because tag MANIFACTURER and ARCH are empty")
         logger.debug(c)
@@ -662,7 +663,7 @@ class FusionReportUnmarshaller(
       case Some(name) =>
         Some (
             Processor (
-                manufacturer    = optText(c\"MANUFACTURER")
+                manufacturer    = optText(c\"MANUFACTURER").map(new Manufacturer(_))
                 , arch          = optText(c\"ARCH")
                 , name          = name
                 , speed         = optText(c\"SPEED").map(_.toFloat)
@@ -694,21 +695,21 @@ class FusionReportUnmarshaller(
   }
 
   def processVms(vm : NodeSeq) : Option[VirtualMachine] = {
-	  optText(vm\"VMTYPE") match {
+	  optText(vm\"UUID") match {
 	  case None =>
-	    logger.debug("Ignoring entry VirtualMachine because tag VMTYPE is empty")
+	    logger.debug("Ignoring entry VirtualMachine because tag UUID is empty")
 	    logger.debug(vm)
 	    None
-	  case Some(vmtype) => Some(
+	  case Some(uuid) => Some(
 	      VirtualMachine (
-	            vmtype    = vmtype
+	            vmtype    = optText(vm\"VMTYPE")
 	          , subsystem = optText(vm\"SUBSYSTEM")
 	          , owner     = optText(vm\"OWNER")
 	          , name      = optText(vm\"NAME")
 	          , status    = optText(vm\"STATUS")
 	          , vcpu      = optText(vm\"VCPU").map(_.toInt)
 	          , memory    = optText(vm\"MEMORY")
-	          , uuid      = optText(vm\"UUID")
+	          , uuid      = new NodeId(uuid)
 	          ) )
 	  }
   }
@@ -735,6 +736,7 @@ class FusionReportUnmarshaller(
   }
 
   def processAgent (ag : NodeSeq): Seq[Agent] = {
+    val keynorm: PrintedKeyNormalizer = new PrintedKeyNormalizer
     val agents:Seq[Agent] = Seq()
     ag.foreach { agent =>
       optText(agent\"NAME") match {
@@ -746,8 +748,8 @@ class FusionReportUnmarshaller(
         Agent (
               name = name
             , policyServerHostname = optText(agent\"POLICY_SERVER_HOSTNAME")
-            , policyServerUUID     = optText(agent\"POLICY_SERVER_UUID")
-            , cfengineKey          = optText(agent\"CFENGINE_KEY")
+            , policyServerUUID     = optText(agent\"POLICY_SERVER_UUID").map(new NodeId(_))
+            , cfengineKey          = optText(agent\"CFENGINE_KEY").map(key => new PublicKey(keynorm(key)))
             , owner                = optText(agent\"OWNER")
             ) +: agents
       }
@@ -764,7 +766,7 @@ class FusionReportUnmarshaller(
 		case Some(uuid) =>
 			Some (
 				Rudder (
-					uuid = uuid,
+					uuid = new NodeId(uuid),
 					agents = processAgent(rud\"AGENT")
 				  ) )
 	  }
