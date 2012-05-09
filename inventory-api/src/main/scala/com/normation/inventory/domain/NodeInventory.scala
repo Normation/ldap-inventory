@@ -132,6 +132,7 @@ case class Agent (
 case class Rudder (
     agents      : Seq[Agent]
   , uuid        : NodeId
+  , hostname    : Option[String]
 	, description : Option[String] = None
 )extends NodeElement with HashcodeCaching
 
