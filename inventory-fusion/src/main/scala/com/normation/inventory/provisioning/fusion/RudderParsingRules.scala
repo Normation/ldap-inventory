@@ -244,7 +244,7 @@ object RudderHostnameParsing extends FusionReportParsingExtension {
     optText(x._1) match {
       case None => x._2
       case Some(e) => x._2.copy( node = x._2.node.copy ( rudder = x._2.node.rudder.flatMap
-          (rudder => Some(rudder.copy(agents = rudder.agents.first.copy(policyServerHostname = Some(e) ) +: rudder.agents.tail ) ) ) )  )
+          (rudder => Some(rudder.copy(hostname = Some(e) ) ) ) )  )
     }
   }
 }

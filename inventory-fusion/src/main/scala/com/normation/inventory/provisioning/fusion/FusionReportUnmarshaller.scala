@@ -765,9 +765,10 @@ class FusionReportUnmarshaller(
 			None
 		case Some(uuid) =>
 			Some (
-				Rudder (
-					uuid = new NodeId(uuid),
-					agents = processAgent(rud\"AGENT")
+				Rudder (    
+				    hostname = optText(rud\"HOSTNAME")
+					, uuid = new NodeId(uuid)
+				  ,	agents = processAgent(rud\"AGENT")
 				  ) )
 	  }
   }
