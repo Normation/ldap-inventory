@@ -138,7 +138,7 @@ case class Rudder (
 
 case class EnvironmentVariable (
     name        : String
-  , value       : String
+  , value       : Option[String]
   , description : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
@@ -266,7 +266,6 @@ case class NodeInventory(
   , processes            : Seq[Process] = Seq()
   , registeredUsers      : Seq[RegisteredUser] = Seq()
   , rudder               : Option[Rudder] = None
-  , accounts             : Seq[String] = Seq()
   , networks             : Seq[Network] = Seq()
   , fileSystems          : Seq[FileSystem] = Seq()
   //TODO: environment:Map[String,String]

@@ -689,7 +689,7 @@ class FusionReportUnmarshaller(
       Some (
           EnvironmentVariable (
               name = key
-              , value = optText(ev\"VAL").get
+              , value = optText(ev\"VAL")
               ) )
     }
   }
