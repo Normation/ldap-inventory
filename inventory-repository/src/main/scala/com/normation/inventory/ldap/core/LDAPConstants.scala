@@ -169,6 +169,9 @@ object LDAPConstants {
   val A_VM_STATUS =  "status"
   val A_VM_CPU = "cpuSpeed"
   val A_VM_MEMORY = "memory"
+  //environnement Variable
+  val A_EV_KEY = "environnementVariableKey"
+  val A_EV_VALUE = "environnementVariableValue"
   //rudder
   val  A_CFENGINE_KEY = "cfEngineKey"
   val A_AGENT_OWNER = "agentOwner"
@@ -214,6 +217,7 @@ object LDAPConstants {
   val OC_NET_IF = "networkInterfaceLogicalElement"
   val OC_VM_INFO = "virtualMachineLogicalElement"
   val OC_RUDDER_AGENT = "rudderAgentLogicalElement"
+  val OC_EV = "environnementVariableLogicalElement"
   val OC_MEMORY = "memoryPhysicalElement"
   val OC_STORAGE = "storagePhysicalElement"
   val OC_BIOS = "biosPhysicalElement"
@@ -341,6 +345,9 @@ object LDAPConstants {
       may = Set(A_VM_CPU,A_VM_MEMORY,A_VM_NAME,
           A_VM_OWNER, A_VM_STATUS, A_VM_SUBSYSTEM,
           A_VM_TYPE))
+  OC +=(OC_EV,
+      must = Set(A_EV_KEY),
+      may = Set(A_EV_VALUE))
    OC +=(OC_RUDDER_AGENT,
       must = Set(A_AGENT_NAME),
       may = Set( A_CFENGINE_KEY,A_AGENT_OWNER,

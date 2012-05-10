@@ -49,6 +49,8 @@ import com.normation.utils.Control.sequence
 import com.normation.inventory.domain.VirtualMachine
 import com.normation.inventory.domain.PublicKey
 import com.normation.inventory.domain.NodeId
+import com.normation.inventory.domain.EnvironmentVariable
+import com.normation.inventory.domain.EnvironmentVariable
 
 
 class InventoryMapper(
@@ -622,7 +624,22 @@ class InventoryMapper(
     }
   }
   
+    ///////////////////////// EnvironnementVariable /////////////////////////
+
+  def entryFromEnvironnementVariable(elt:EnvironmentVariable, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
+    val e = dit.NODES.EV.model(serverId,elt.name)
+    e.setOpt(elt.value, A_EV_VALUE, {x:String => x})
+    e
+  }
   
+  def environnementVariableFromEntry(e:LDAPEntry) : Box[EnvironmentVariable] = {
+    for {
+      key <- e(A_EV_KEY) ?~! "Missing required attribute %s in entry: %s".format(A_EV_KEY, e)
+      value = e(A_EV_VALUE)
+    } yield {
+      EnvironmentVariable(key,value)
+    }
+  }
   //////////////////Node/ NodeInventory /////////////////////////
   
     
@@ -694,7 +711,7 @@ class InventoryMapper(
       ditService.getDit(_.status).MACHINES.MACHINE.dn(_.uuid).toString
     }:_*)
   */  
-    root +=! (A_ACCOUNT, server.accounts:_*)
+ //   root +=! (A_ACCOUNT, server.accounts:_*)
   //  root +=! (A_NODE_TECHNIQUES, server.techniques:_*)
    // root +=! (A_LIST_OF_IP, server.serverIps:_*)
 
@@ -735,9 +752,13 @@ class InventoryMapper(
         case e:EmptyBox => log(e, "network interface")
         case Full(x) => server.copy( vms = x +: server.vms)
       }
-        case e if(e.isA(OC_RUDDER_AGENT)) => agentFromEntry(e) match {
+      case e if(e.isA(OC_RUDDER_AGENT)) => agentFromEntry(e) match {
         case e:EmptyBox => log(e, "network interface")
-        case Full(x) => server.copy( rudder = server.rudder.map{rud => rud.copy(agents = x +: rud.agents)})
+         case Full(x) => server.copy( rudder = server.rudder.map{rud => rud.copy(agents = x +: rud.agents)})
+      }
+      case e if(e.isA(OC_EV)) => environnementVariableFromEntry(e) match {
+        case e:EmptyBox => log(e, "network interface")
+        case Full(x) => server.copy(environmentVariables = x +: server.environmentVariables)
       }
       case e => 
         logger.error("Unknow entry type for a server element, that entry will be ignored: %s".format(e))
@@ -855,6 +876,7 @@ class InventoryMapper(
          , swap
          , inventoryDate
          , arch
+  
          , lastLoggedUser
          , lastLoggedUserTime
          , Nil
