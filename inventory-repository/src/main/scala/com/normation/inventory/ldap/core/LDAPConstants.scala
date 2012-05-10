@@ -107,7 +107,7 @@ object LDAPConstants {
   //Network
   val A_NETWORK_NAME = "networkInterface"
   val A_SPEED = "speed"
-  //filesyste
+  //filesystem
   val A_MOUNT_POINT = "mountPoint"
   val A_FILE_COUNT = "fileCount"
   val A_FREE_SPACE = "fileSystemFreeSpace"
@@ -159,8 +159,24 @@ object LDAPConstants {
   //video
   val A_VIDEO_NAME = "videoCardName"
   val A_VIDEO_CHIPSET = "videoChipset"
-  val A_VIDEO_RESOLUTION = "videoResolution"
+  val A_VIDEO_RESOLUTION = "videoResolution"    
+  //virtual machine
+  val A_VM_ID = "virtualMachineUuid"
+  val A_VM_TYPE = "vmType"
+  val A_VM_SUBSYSTEM = "subsystem"
+  val A_VM_OWNER = "owner"
+  val A_VM_NAME = "name"
+  val A_VM_STATUS =  "status"
+  val A_VM_CPU = "cpuSpeed"
+  val A_VM_MEMORY = "memory"
+  //rudder
+  val  A_CFENGINE_KEY = "cfEngineKey"
+  val A_AGENT_OWNER = "agentOwner"
+  val A_SERVER_HOSTNAME = "serverHostname"
+  val A_SERVER_UUID = "serverUUID"
+  val A_AGENT_NAME = "agentName"
   
+    
   val A_MEMBER = "member"
   val A_MEMBER_URL = "memberUrl"
 
@@ -179,7 +195,7 @@ object LDAPConstants {
   val A_OS_SUZE = "Suse"
     
   /*
-   * A bunch of name, just to be sur to use variable
+   * A bunch of name, just to be sure to use variable
    * and not string all around our code
    */
   val OC_TOP = "top"
@@ -196,6 +212,8 @@ object LDAPConstants {
   val OC_VM = "virtualMachine"
   val OC_FS = "fileSystemLogicalElement"
   val OC_NET_IF = "networkInterfaceLogicalElement"
+  val OC_VM_INFO = "virtualMachineLogicalElement"
+  val OC_RUDDER_AGENT = "rudderAgentLogicalElement"
   val OC_MEMORY = "memoryPhysicalElement"
   val OC_STORAGE = "storagePhysicalElement"
   val OC_BIOS = "biosPhysicalElement"
@@ -318,7 +336,15 @@ object LDAPConstants {
           A_NETIF_DHCP,A_NETIF_GATEWAY,A_NETIF_MASK,
           A_NETIF_SUBNET,A_NETIF_MAC,A_NETIF_TYPE,
           A_NETIF_TYPE_MIB))
-          
+  OC +=(OC_VM_INFO,
+      must = Set(A_VM_ID),
+      may = Set(A_VM_CPU,A_VM_MEMORY,A_VM_NAME,
+          A_VM_OWNER, A_VM_STATUS, A_VM_SUBSYSTEM,
+          A_VM_TYPE))
+   OC +=(OC_RUDDER_AGENT,
+      must = Set(A_AGENT_NAME),
+      may = Set( A_CFENGINE_KEY,A_AGENT_OWNER,
+          A_SERVER_HOSTNAME,A_SERVER_UUID))       
       
   OC +=(OC_UNIX_NODE, sup = OC(OC_NODE))
   OC +=(OC_LINUX_NODE, sup = OC(OC_UNIX_NODE))

@@ -180,6 +180,8 @@ case class InventoryDit(val BASE_DN:DN, val SOFTWARE_BASE_DN:DN, val name:String
 
     val NETWORK = new NODE_ELT(NODE,OC_NET_IF,A_NETWORK_NAME, NODE)
     val FILESYSTEM = new NODE_ELT(NODE,OC_FS,A_MOUNT_POINT, NODE)
+    val VM = new NODE_ELT(NODE,OC_VM_INFO,A_VM_ID, NODE)
+    val AGENT = new NODE_ELT(NODE,OC_RUDDER_AGENT,A_AGENT_NAME,NODE)
     
   }
   

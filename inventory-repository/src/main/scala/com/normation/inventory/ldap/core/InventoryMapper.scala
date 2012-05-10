@@ -46,6 +46,10 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import InetAddressUtils._
 import com.normation.utils.Control.sequence
+import com.normation.inventory.domain.VirtualMachine
+import com.normation.inventory.domain.PublicKey
+import com.normation.inventory.domain.NodeId
+
 
 class InventoryMapper(
     ditService:InventoryDitService
@@ -559,6 +563,66 @@ class InventoryMapper(
   }
  
   
+    ///////////////////////// VM INFO /////////////////////////
+
+
+  def entryFromVMInfo(elt:VirtualMachine, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
+    val e = dit.NODES.NETWORK.model(serverId,elt.uuid.value)
+    e.setOpt(elt.description, A_DESCRIPTION, {x:String => x})
+    e.setOpt(elt.memory,A_VM_MEMORY,{x:String => x})
+    e.setOpt(elt.name,A_VM_NAME,{x:String => x})
+    e.setOpt(elt.owner,A_VM_OWNER,{x:String => x})
+    e.setOpt(elt.status,A_VM_STATUS,{x:String => x})
+    e.setOpt(elt.subsystem,A_VM_SUBSYSTEM,{x:String => x})
+    e.setOpt(elt.vcpu,A_VM_CPU,{x:Int => x.toString()})
+    e.setOpt(elt.vmtype,A_VM_TYPE,{x:String => x})
+    e
+  }
+  
+  def vmFromEntry(e:LDAPEntry) : Box[VirtualMachine] = {
+    for {
+      vmid <- e(A_VM_ID) ?~! "Missing required attribute %s in entry: %s".format(A_VM_ID, e)
+        
+      memory = e(A_VM_MEMORY)
+      name = e(A_VM_NAME)
+      owner = e(A_VM_OWNER)
+      status = e(A_VM_STATUS)
+      subsystem = e(A_VM_SUBSYSTEM)
+      vcpu = e.getAsInt(A_VM_CPU)
+      vmtype = e(A_VM_TYPE)
+      
+    } yield {
+      VirtualMachine(vmtype,subsystem,owner,name,status,vcpu,memory,new MachineUuid(vmid))
+    }
+  }
+  
+    ///////////////////////// RUDDER AGENTS /////////////////////////
+
+
+  def entryFromAgent(elt:Agent, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
+    val e = dit.NODES.AGENT.model(serverId,elt.name)
+    e.setOpt(elt.cfengineKey, A_CFENGINE_KEY, {x:PublicKey => x.key})
+    e.setOpt(elt.owner,A_AGENT_OWNER,{x:String => x})
+    e.setOpt(elt.policyServerHostname,A_SERVER_HOSTNAME,{x:String => x})
+    e.setOpt(elt.policyServerUUID,A_SERVER_UUID,{x:NodeId => x.value})
+    e
+  }
+  
+  def agentFromEntry(e:LDAPEntry) : Box[Agent] = {
+    for {
+      name <- e(A_AGENT_NAME) ?~! "Missing required attribute %s in entry: %s".format(A_AGENT_NAME, e)
+      cfengineKey = e(A_CFENGINE_KEY)
+      owner = e(A_AGENT_OWNER)
+      policyServerHostname = e(A_SERVER_HOSTNAME)
+      policyServerUUID = e(A_SERVER_UUID)
+      
+    } yield {
+ 
+      Agent(name,policyServerHostname,Some(new NodeId(policyServerUUID.get)),Some(PublicKey(cfengineKey.get)),owner)
+    }
+  }
+  
+  
   //////////////////Node/ NodeInventory /////////////////////////
   
     
@@ -610,35 +674,36 @@ class InventoryMapper(
     root +=! (A_OS_KERNEL_VERSION, server.main.osDetails.kernelVersion.value)
       
     root +=! (A_ROOT_USER, server.main.rootUser)
-    root +=! (A_HOSTNAME, server.main.hostname)
-    root +=! (A_POLICY_SERVER_UUID, server.main.policyServerId.value)
+    root +=! (A_HOSTNAME, server.rudder.get.hostname.get)
+    //root +=! (A_POLICY_SERVER_UUID, server.main.policyServerId.value)
     root.setOpt(server.ram, A_OS_RAM, { m: MemorySize => m.size.toString })
     root.setOpt(server.swap, A_OS_SWAP, { m: MemorySize => m.size.toString })
     root.setOpt(server.archDescription, A_ARCH, { x: String => x })
     root.setOpt(server.lastLoggedUser, A_LAST_LOGGED_USER, { x: String => x })
     root.setOpt(server.lastLoggedUserTime, A_LAST_LOGGED_USER_TIME, { x: DateTime => GeneralizedTime(x).toString })
     root.setOpt(server.inventoryDate, A_INVENTORY_DATE, { x: DateTime => GeneralizedTime(x).toString })
-    root +=! (A_AGENTS_NAME, server.agentNames.map(x => x.toString):_*) 
-    root +=! (A_PKEYS, server.publicKeys.map(x => x.key):_*) 
+   // root +=! (A_AGENTS_NAME, server.agentNames.map(x => x.toString):_*) 
+    //root +=! (A_PKEYS, server.publicKeys.map(x => x.key):_*) 
     root +=! (A_SOFTWARE_DN, server.softwareIds.map(x => dit.SOFTWARE.SOFT.dn(x).toString):_*)
 
     //we don't know their dit...
     root +=! (A_CONTAINER_DN, server.machineId.map { case (id, status) => 
       ditService.getDit(status).MACHINES.MACHINE.dn(id).toString
     }.toSeq:_*)
-    root +=! (A_HOSTED_VM_DN, server.hostedVmIds.map { case (id, status) => 
-      ditService.getDit(status).MACHINES.MACHINE.dn(id).toString
+/*    root +=! (A_HOSTED_VM_DN, server.vms.map {
+      ditService.getDit(_.status).MACHINES.MACHINE.dn(_.uuid).toString
     }:_*)
-    
+  */  
     root +=! (A_ACCOUNT, server.accounts:_*)
-    root +=! (A_NODE_TECHNIQUES, server.techniques:_*)
-    root +=! (A_LIST_OF_IP, server.serverIps:_*)
+  //  root +=! (A_NODE_TECHNIQUES, server.techniques:_*)
+   // root +=! (A_LIST_OF_IP, server.serverIps:_*)
 
     val tree = LDAPTree(root)
     //now, add machine elements as children
     server.networks.foreach { x => tree.addChild(entryFromNetwork(x, dit, server.main.id)) }
     server.fileSystems.foreach { x => tree.addChild(entryFromFileSystem(x, dit, server.main.id)) }
-   
+    server.vms.foreach { x => tree.addChild(entryFromVMInfo(x,dit,server.main.id))}
+    server.rudder.get.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id))}
     tree
   }
 
@@ -664,6 +729,15 @@ class InventoryMapper(
       case e if(e.isA(OC_FS)) => fileSystemFromEntry(e) match {
         case e:EmptyBox => log(e, "file system")
         case Full(x) => server.copy( fileSystems = x +: server.fileSystems)
+      }
+
+      case e if(e.isA(OC_VM_INFO)) => vmFromEntry(e) match {
+        case e:EmptyBox => log(e, "network interface")
+        case Full(x) => server.copy( vms = x +: server.vms)
+      }
+        case e if(e.isA(OC_RUDDER_AGENT)) => agentFromEntry(e) match {
+        case e:EmptyBox => log(e, "network interface")
+        case Full(x) => server.copy( rudder = server.rudder.map{rud => rud.copy(agents = x +: rud.agents)})
       }
       case e => 
         logger.error("Unknow entry type for a server element, that entry will be ignored: %s".format(e))
@@ -697,7 +771,7 @@ class InventoryMapper(
       //server.main info: id, status, rootUser, hostname, osDetails: all mandatories
       inventoryStatus = ditService.getInventoryStatus(dit)
       id             <- dit.NODES.NODE.idFromDN(entry.dn) ?~! missingAttr("for server id")
-      hostname       <- requiredAttr(A_HOSTNAME)
+      hostname       = requiredAttr(A_HOSTNAME)
       rootUser       <- requiredAttr(A_ROOT_USER)
       policyServerId <- requiredAttr(A_POLICY_SERVER_UUID)
       osName         <- requiredAttr(A_OS_NAME)
@@ -752,7 +826,7 @@ class InventoryMapper(
       
       lastLoggedUser = entry(A_LAST_LOGGED_USER)
       lastLoggedUserTime = entry.getAsGTime(A_LAST_LOGGED_USER_TIME).map { _.dateTime }
-      publicKeys = entry.valuesFor(A_PKEYS).map(k => PublicKey(k))
+      //publicKeys = entry.valuesFor(A_PKEYS).map(k => PublicKey(k))
       softwareIds = entry.valuesFor(A_SOFTWARE_DN).toSeq.flatMap(x => dit.SOFTWARE.SOFT.idFromDN(new DN(x)))
       machineId = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_CONTAINER_DN)).toList match {
         case Nil => None
@@ -765,31 +839,33 @@ class InventoryMapper(
               )
           Some(m1)
       }
-      hostedVmIds = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_HOSTED_VM_DN))
+      
+      rudder= Some(Rudder(Nil,id,hostname))
+     // hostedVmIds = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_HOSTED_VM_DN))
       inventoryDate = entry.getAsGTime(A_INVENTORY_DATE).map { _.dateTime }
-      accounts = entry.valuesFor(A_ACCOUNT).toSeq
-      techniques = entry.valuesFor(A_NODE_TECHNIQUES).toSeq
-      serverIps = entry.valuesFor(A_LIST_OF_IP).toSeq
+     // accounts = entry.valuesFor(A_ACCOUNT).toSeq
+      //techniques = entry.valuesFor(A_NODE_TECHNIQUES).toSeq
+     // serverIps = entry.valuesFor(A_LIST_OF_IP).toSeq
     } yield {
       NodeInventory(
-         main = NodeSummary(id,inventoryStatus,rootUser,hostname, osDetails, NodeId(policyServerId)),
-         name,
-         description,
-         ram, swap,
-         inventoryDate,
-         arch,
-         lastLoggedUser,
-         lastLoggedUserTime,
-         agentNames,
-         publicKeys.toSeq,
-         machineId,
-         hostedVmIds,
-         softwareIds,
-         accounts,
-         techniques,
-         serverIps,
-         networks = Nil,
-         fileSystems = Nil
+           NodeSummary(id,inventoryStatus,rootUser, osDetails)
+         , name
+         , description
+         , ram
+         , swap
+         , inventoryDate
+         , arch
+         , lastLoggedUser
+         , lastLoggedUserTime
+         , Nil
+         , machineId
+         , Nil
+         , softwareIds
+         , Nil
+         , Nil
+         , rudder
+         , Nil
+         , Nil
       )
     }
   }
