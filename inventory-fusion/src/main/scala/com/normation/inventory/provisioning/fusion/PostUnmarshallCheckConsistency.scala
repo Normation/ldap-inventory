@@ -107,7 +107,7 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
     val tag = "HOSTNAME"
     for {
       tagHere <- checkNodeSeq(report.sourceReport, tag) ?~! "Missing '%s' attribute in report. This attribute is mandatory and must contains node hostname.".format(tag)
-      idHere <- if(report.node.main.hostname == tagHere) Full("OK")
+      idHere <- if(report.node.rudder.get.hostname.get == tagHere) Full("OK")
                 else Failure("Hostname is not correctly set (but tag '%s' is present with value '%s'".format(tag, tagHere) )
     } yield {
       report
@@ -129,7 +129,7 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
     val tag = "POLICY_SERVER"
     for {
       tagHere <- checkNodeSeq(report.sourceReport, tag) ?~! "Missing rudder policy server attribute '%s' in report. This attribute is mandatory and must contains the policy server ID that the node must contact.".format(tag)
-      idHere <- if(report.node.main.policyServerId.value == tagHere) Full("OK")
+      idHere <- if(report.node.rudder.get.agents.first.policyServerUUID.get.value == tagHere) Full("OK")
                 else Failure("Rudder policy server is not correctly set (but tag '%s' is present with value '%s'".format(tag, tagHere) )
     } yield {
       report
@@ -151,7 +151,7 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
     val tag = "AGENTNAME"
     for {
       tagHere <- checkNodeSeq(report.sourceReport, tag) ?~! "Missing agent name attribute in report. This attribute is mandatory and must contains (at least one of) the agent deployed on the node.".format(tag)
-      idHere <- Box(report.node.agentNames.headOption) ?~! "Agent name is not correctly set (but tag '%s' is present with value '%s'".format(tag, tagHere)
+      idHere <- Box(Some(report.node.rudder.get.agents.first.name)) ?~! "Agent name is not correctly set (but tag '%s' is present with value '%s'".format(tag, tagHere)
     } yield {
       report
     }
