@@ -126,6 +126,7 @@ case object Redhat extends LinuxType with HashcodeCaching           { val name =
 case object Centos extends LinuxType with HashcodeCaching           { val name = "Centos" }
 case object Fedora extends LinuxType with HashcodeCaching           { val name = "Fedora" }
 case object Suse extends LinuxType with HashcodeCaching             { val name = "Suse" }
+case object Android extends LinuxType with HashcodeCaching          { val name = "Android" }
 
 /**
  * The different OS type. For now, we know
