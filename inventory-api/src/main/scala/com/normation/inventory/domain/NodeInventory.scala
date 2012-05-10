@@ -94,7 +94,7 @@ case class VirtualMachine (
   , status      : Option[String]
   , vcpu        : Option[Int]
   , memory      : Option[String]
-  , uuid        : NodeId
+  , uuid        : MachineUuid
     // TODO : Maybe add an inventoryStatus field
   , description : Option[String] = None
 ) extends NodeElement with HashcodeCaching

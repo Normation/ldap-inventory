@@ -709,7 +709,7 @@ class FusionReportUnmarshaller(
 	          , status    = optText(vm\"STATUS")
 	          , vcpu      = optText(vm\"VCPU").map(_.toInt)
 	          , memory    = optText(vm\"MEMORY")
-	          , uuid      = new NodeId(uuid)
+	          , uuid      = new MachineUuid(uuid)
 	          ) )
 	  }
   }
