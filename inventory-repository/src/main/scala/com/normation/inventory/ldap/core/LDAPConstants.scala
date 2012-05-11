@@ -178,7 +178,15 @@ object LDAPConstants {
   val A_SERVER_HOSTNAME = "serverHostname"
   val A_SERVER_UUID = "serverUUID"
   val A_AGENT_NAME = "agentName"
-  
+  // Process
+  val A_PID = "ProcessID"
+  val A_CMD_NAME = "commandName"
+  val A_CPU_USAGE = "cpuUsage"
+  val A_MEMORY_USAGE = "memoryUsage"
+  val A_PROC_START = "start"
+  val A_TTY = "tty"
+  val A_PROC_USER = "user"
+  val A_VIRTUAL_MEMORY = "virtualMemory"
     
   val A_MEMBER = "member"
   val A_MEMBER_URL = "memberUrl"
@@ -217,6 +225,7 @@ object LDAPConstants {
   val OC_NET_IF = "networkInterfaceLogicalElement"
   val OC_VM_INFO = "virtualMachineLogicalElement"
   val OC_RUDDER_AGENT = "rudderAgentLogicalElement"
+  val OC_PROCESS = "proccesLogicalElement"
   val OC_EV = "environnementVariableLogicalElement"
   val OC_MEMORY = "memoryPhysicalElement"
   val OC_STORAGE = "storagePhysicalElement"
@@ -348,7 +357,11 @@ object LDAPConstants {
   OC +=(OC_EV,
       must = Set(A_EV_KEY),
       may = Set(A_EV_VALUE))
- 
+      
+   OC +=(OC_PROCESS,
+      must = Set(A_PID),
+      may = Set(A_CMD_NAME,A_CPU_USAGE,A_MEMORY_USAGE
+          ,A_PROC_START,A_TTY,A_PROC_USER,A_VIRTUAL_MEMORY))
       
   OC +=(OC_UNIX_NODE, sup = OC(OC_NODE))
   OC +=(OC_LINUX_NODE, sup = OC(OC_UNIX_NODE))

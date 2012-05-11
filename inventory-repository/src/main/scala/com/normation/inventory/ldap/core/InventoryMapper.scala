@@ -597,7 +597,36 @@ class InventoryMapper(
       VirtualMachine(vmtype,subsystem,owner,name,status,vcpu,memory,new MachineUuid(vmid))
     }
   }
+      ///////////////////////// PROCESSES /////////////////////////
+
+
+  def entryFromProcess(elt:Process, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
+    val e = dit.NODES.PROCESS.model(serverId,elt.pid.toString())
+    e.setOpt(elt.commandName, A_CMD_NAME, {x:String => x})
+    e.setOpt(elt.cpuUsage,A_CPU_USAGE,{x:Float => x.toString()})
+    e.setOpt(elt.memory,A_MEMORY_USAGE,{x:Float => x.toString()})
+    e.setOpt(elt.started,A_PROC_START,{x:DateTime => x.toString()})
+    e.setOpt(elt.tty,A_TTY,{x:String => x})
+    e.setOpt(elt.user,A_PROC_USER,{x:String => x})
+    e.setOpt(elt.virtualMemory,A_VIRTUAL_MEMORY,{x:Int => x.toString()})
+    e
+  }
   
+  def processFromEntry(e:LDAPEntry) : Box[Process] = {
+    for {
+      pid <- e.getAsInt(A_PID) ?~! "Missing required attribute %s in entry: %s".format(A_PID, e)
+      cmd = e(A_CMD_NAME)
+      cpuUsage = e.getAsFloat(A_CPU_USAGE)
+      memoryUsage = e.getAsFloat(A_MEMORY_USAGE)
+      start = e(A_PROC_START).map(DateTime.parse) 
+      tty = e(A_TTY)
+      user = e(A_PROC_USER)
+      virtualmem = e.getAsInt(A_VIRTUAL_MEMORY) 
+      
+    } yield {
+      Process(cmd,cpuUsage,memoryUsage,pid,start, tty, user, virtualmem)
+    }
+  }
     ///////////////////////// RUDDER AGENTS /////////////////////////
 
 
@@ -721,6 +750,7 @@ class InventoryMapper(
     server.fileSystems.foreach { x => tree.addChild(entryFromFileSystem(x, dit, server.main.id)) }
     server.vms.foreach { x => tree.addChild(entryFromVMInfo(x,dit,server.main.id))}
     server.main.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id))}
+    server.processes.foreach { x => tree.addChild(entryFromProcess(x,dit,server.main.id))}
     tree
   }
 
@@ -749,16 +779,20 @@ class InventoryMapper(
       }
 
       case e if(e.isA(OC_VM_INFO)) => vmFromEntry(e) match {
-        case e:EmptyBox => log(e, "network interface")
+        case e:EmptyBox => log(e, "virtual machine")
         case Full(x) => server.copy( vms = x +: server.vms)
       }
       case e if(e.isA(OC_RUDDER_AGENT)) => agentFromEntry(e) match {
-        case e:EmptyBox => log(e, "network interface")
+        case e:EmptyBox => log(e, "rudder agent")
          case Full(x) => server.copy( main = server.main.copy ( agents = x +: server.main.agents))
       }
       case e if(e.isA(OC_EV)) => environnementVariableFromEntry(e) match {
-        case e:EmptyBox => log(e, "network interface")
+        case e:EmptyBox => log(e, "environnement variable")
         case Full(x) => server.copy(environmentVariables = x +: server.environmentVariables)
+      }
+      case e if(e.isA(OC_PROCESS)) => processFromEntry(e) match {
+        case e:EmptyBox => log(e, "process")
+        case Full(x) => server.copy(processes = x +: server.processes)
       }
       case e => 
         logger.error("Unknow entry type for a server element, that entry will be ignored: %s".format(e))

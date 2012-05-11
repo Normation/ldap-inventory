@@ -183,6 +183,7 @@ case class InventoryDit(val BASE_DN:DN, val SOFTWARE_BASE_DN:DN, val name:String
     val VM = new NODE_ELT(NODE,OC_VM_INFO,A_VM_ID, NODE)
     val AGENT = new NODE_ELT(NODE,OC_RUDDER_AGENT,A_AGENT_NAME,NODE)
     val EV = new NODE_ELT(NODE,OC_EV,A_EV_KEY,NODE)
+    val PROCESS = new NODE_ELT(NODE,OC_PROCESS,A_PID,NODE)
   }
   
   val MACHINES = new OU("Machines", BASE_DN) { machines =>  
