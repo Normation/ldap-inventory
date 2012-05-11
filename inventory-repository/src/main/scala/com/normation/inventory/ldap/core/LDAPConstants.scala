@@ -120,7 +120,7 @@ object LDAPConstants {
   val A_CORE = "cpuCore"
   val A_THREAD = "cpuThread"
   val A_PROCESSOR_FAMILY_NAME = "cpuFamilyName"
-  val A_PROCESSOR_ARCHITECTURE = "cpuArchitecture" 
+  val A_PROCESSOR_ARCHITECTURE = "cpuArchitecture"
   val A_CPUID = "cpuID"
   val A_EXTERNAL_CLOCK = "cpuExternalClock"
   // memory
@@ -159,7 +159,7 @@ object LDAPConstants {
   //video
   val A_VIDEO_NAME = "videoCardName"
   val A_VIDEO_CHIPSET = "videoChipset"
-  val A_VIDEO_RESOLUTION = "videoResolution"    
+  val A_VIDEO_RESOLUTION = "videoResolution"
   //virtual machine
   val A_VM_ID = "virtualMachineUuid"
   val A_VM_TYPE = "vmType"
@@ -170,8 +170,7 @@ object LDAPConstants {
   val A_VM_CPU = "cpuSpeed"
   val A_VM_MEMORY = "memory"
   //environnement Variable
-  val A_EV_KEY = "environnementVariableKey"
-  val A_EV_VALUE = "environnementVariableValue"
+  val A_EV = "environnementVariable"
   //Agent
   val  A_CFENGINE_KEY = "cfEngineKey"
   val A_AGENT_OWNER = "agentOwner"
@@ -187,7 +186,7 @@ object LDAPConstants {
   val A_TTY = "tty"
   val A_PROC_USER = "user"
   val A_VIRTUAL_MEMORY = "virtualMemory"
-    
+
   val A_MEMBER = "member"
   val A_MEMBER_URL = "memberUrl"
 
@@ -226,7 +225,6 @@ object LDAPConstants {
   val OC_VM_INFO = "virtualMachineLogicalElement"
   val OC_RUDDER_AGENT = "rudderAgentLogicalElement"
   val OC_PROCESS = "proccesLogicalElement"
-  val OC_EV = "environnementVariableLogicalElement"
   val OC_MEMORY = "memoryPhysicalElement"
   val OC_STORAGE = "storagePhysicalElement"
   val OC_BIOS = "biosPhysicalElement"
@@ -329,7 +327,7 @@ object LDAPConstants {
   OC +=(OC_NODE, sup = OC(OC_TOP), 
       must = Set(A_NODE_UUID, A_OS_NAME, A_OS_FULL_NAME, A_OS_VERSION, A_OS_KERNEL_VERSION),
       may = Set(A_NAME,A_DESCRIPTION,A_PKEYS,A_AGENTS_NAME,A_HOSTED_VM_DN,
-          A_CONTAINER_DN,A_SOFTWARE_DN,A_ACCOUNT,A_ROOT_USER,A_ARCH, A_LAST_LOGGED_USER, A_LAST_LOGGED_USER_TIME,
+          A_CONTAINER_DN,A_SOFTWARE_DN,A_ACCOUNT,A_EV,A_ROOT_USER,A_ARCH, A_LAST_LOGGED_USER, A_LAST_LOGGED_USER_TIME,
           A_HOSTNAME,A_NODE_TECHNIQUES,A_OS_RAM,A_OS_SWAP, A_LIST_OF_IP, A_OS_SERVICE_PACK) )
   
   OC +=(OC_WINDOWS_NODE, sup = OC(OC_NODE),
@@ -354,10 +352,7 @@ object LDAPConstants {
       may = Set(A_VM_CPU,A_VM_MEMORY,A_VM_NAME,
           A_VM_OWNER, A_VM_STATUS, A_VM_SUBSYSTEM,
           A_VM_TYPE))
-  OC +=(OC_EV,
-      must = Set(A_EV_KEY),
-      may = Set(A_EV_VALUE))
-      
+
    OC +=(OC_PROCESS,
       must = Set(A_PID),
       may = Set(A_CMD_NAME,A_CPU_USAGE,A_MEMORY_USAGE

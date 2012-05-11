@@ -41,6 +41,7 @@ import com.normation.ldap.sdk._
 import com.normation.ldap.sdk.schema.LDAPObjectClass
 import org.joda.time.DateTime
 import net.liftweb.common._
+import net.liftweb.json._
 import Box._
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -51,6 +52,11 @@ import com.normation.inventory.domain.PublicKey
 import com.normation.inventory.domain.NodeId
 import com.normation.inventory.domain.EnvironmentVariable
 import com.normation.inventory.domain.EnvironmentVariable
+import com.normation.inventory.domain.EnvironmentVariable
+import net.liftweb.json.Serialization
+import com.normation.inventory.domain.EnvironmentVariable
+
+
 
 
 class InventoryMapper(
@@ -59,6 +65,7 @@ class InventoryMapper(
   , acceptedDit:InventoryDit
   , removedDit:InventoryDit
 ) extends Loggable {
+  implicit val formats = Serialization.formats(NoTypeHints)
 
   ////////////////////////////////////////////////////////////
   ///////////////////////// Software /////////////////////////
@@ -68,18 +75,18 @@ class InventoryMapper(
   
   def entryFromSoftware(soft:Software) : LDAPEntry = {
     val e = acceptedDit.SOFTWARE.SOFT.model(soft.id)
-    e.setOpt(soft.name, A_NAME, {x:String => x})
-    e.setOpt(soft.description, A_DESCRIPTION, {x:String => x})
-    e.setOpt(soft.version,A_SOFT_VERSION,{x:Version => x.value})
-    e.setOpt(soft.editor, A_EDITOR, {x:SoftwareEditor => x.name})
-    e.setOpt(soft.releaseDate,A_RELEASE_DATE,{x:DateTime => GeneralizedTime(x).toString})
+    e.setOpt(soft.name,        A_NAME,         {x:String => x})
+    e.setOpt(soft.description, A_DESCRIPTION,  {x:String => x})
+    e.setOpt(soft.version,     A_SOFT_VERSION, {x:Version => x.value})
+    e.setOpt(soft.editor,      A_EDITOR,       {x:SoftwareEditor => x.name})
+    e.setOpt(soft.releaseDate, A_RELEASE_DATE, {x:DateTime => GeneralizedTime(x).toString})
     soft.license.foreach { lic => 
       e +=! (A_LICENSE_NAME,lic.name) 
-      e.setOpt(lic.description,A_LICENSE_DESC,{x:String => x})
-      e.setOpt(lic.expirationDate, A_LICENSE_EXP, {x:DateTime => x.toString()})
-      e.setOpt(lic.productId,A_LICENSE_PRODUCT_ID,{x:String => x})
-      e.setOpt(lic.productKey,A_LICENSE_PRODUCT_KEY,{x:String => x})
-      e.setOpt(lic.oem,A_LICENSE_OEM,{x:String => x})
+      e.setOpt(lic.description,    A_LICENSE_DESC,        {x:String => x})
+      e.setOpt(lic.expirationDate, A_LICENSE_EXP,         {x:DateTime => x.toString()})
+      e.setOpt(lic.productId,      A_LICENSE_PRODUCT_ID,  {x:String => x})
+      e.setOpt(lic.productKey,     A_LICENSE_PRODUCT_KEY, {x:String => x})
+      e.setOpt(lic.oem,            A_LICENSE_OEM,         {x:String => x})
     }
     e
   }
@@ -87,19 +94,19 @@ class InventoryMapper(
   def softwareFromEntry(e:LDAPEntry) : Box[Software] = {
     for {
       id <- acceptedDit.SOFTWARE.SOFT.idFromDN(e.dn)
-      name = e(A_NAME)
-      desc = e(A_DESCRIPTION)
-      version = e(A_SOFT_VERSION).map(v => new Version(v))
+      name        = e(A_NAME)
+      desc        = e(A_DESCRIPTION)
+      version     = e(A_SOFT_VERSION).map(v => new Version(v))
       releaseDate = e.getAsGTime(A_RELEASE_DATE) map { _.dateTime }
-      editor = e(A_EDITOR) map { x => new SoftwareEditor(x) }
+      editor      = e(A_EDITOR) map { x => new SoftwareEditor(x) }
       //licence
       val lic = e(A_LICENSE_NAME) map { name =>
         License(
             name
-          , description = e(A_LICENSE_DESC)
-          , productId = e(A_LICENSE_PRODUCT_ID)
-          , productKey = e(A_LICENSE_PRODUCT_KEY)
-          , oem = e(A_LICENSE_OEM)
+          , description    = e(A_LICENSE_DESC)
+          , productId      = e(A_LICENSE_PRODUCT_ID)
+          , productKey     = e(A_LICENSE_PRODUCT_KEY)
+          , oem            = e(A_LICENSE_OEM)
           , expirationDate = e.getAsGTime(A_LICENSE_EXP) map { _.dateTime }
         )
       }
@@ -119,20 +126,20 @@ class InventoryMapper(
     val e = dit.MACHINES.BIOS.model(machineId,elt.name)
     e.setOpt(elt.description, A_DESCRIPTION, {x:String => x})
     e +=! (A_QUANTITY, elt.quantity.toString)
-    e.setOpt(elt.editor, A_EDITOR, {x:SoftwareEditor => x.name})
-    e.setOpt(elt.releaseDate,A_RELEASE_DATE,{x:DateTime => GeneralizedTime(x).toString})
-    e.setOpt(elt.version,A_SOFT_VERSION,{x:Version => x.value})
+    e.setOpt(elt.editor,      A_EDITOR,       {x:SoftwareEditor => x.name})
+    e.setOpt(elt.releaseDate, A_RELEASE_DATE, {x:DateTime => GeneralizedTime(x).toString})
+    e.setOpt(elt.version,     A_SOFT_VERSION, {x:Version => x.value})
     e
   }
   
   def biosFromEntry(e:LDAPEntry) : Box[Bios] = {
     for {
       name <- e(A_BIOS_NAME) ?~! "Missing required attribute %s in entry: %s".format(A_BIOS_NAME, e)
-      desc = e(A_DESCRIPTION)
-      quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
-      version = e(A_SOFT_VERSION).map(v => new Version(v))
+      desc        = e(A_DESCRIPTION)
+      quantity    = e.getAsInt(A_QUANTITY).getOrElse(1)
+      version     = e(A_SOFT_VERSION).map(v => new Version(v))
       releaseDate = e.getAsGTime(A_RELEASE_DATE) map { _.dateTime }
-      editor = e(A_EDITOR) map { x => new SoftwareEditor(x) }
+      editor      = e(A_EDITOR) map { x => new SoftwareEditor(x) }
     } yield {
       Bios( name, desc, version, editor, releaseDate, quantity )
     }
@@ -610,7 +617,7 @@ class InventoryMapper(
     e.setOpt(elt.commandName,   A_CMD_NAME,       {x:String => x})
     e.setOpt(elt.cpuUsage,      A_CPU_USAGE,      {x:Float => x.toString()})
     e.setOpt(elt.memory,        A_MEMORY_USAGE,   {x:Float => x.toString()})
-    e.setOpt(elt.started,       A_PROC_START,     {x:DateTime => x.toString()})
+    e.setOpt(elt.started,       A_PROC_START,     {x:DateTime => GeneralizedTime(x).toString})
     e.setOpt(elt.tty,           A_TTY,            {x:String => x})
     e.setOpt(elt.user,          A_PROC_USER,      {x:String => x})
     e.setOpt(elt.virtualMemory, A_VIRTUAL_MEMORY, {x:Int => x.toString()})
@@ -624,7 +631,7 @@ class InventoryMapper(
       cmd         = e(A_CMD_NAME)
       cpuUsage    = e.getAsFloat(A_CPU_USAGE)
       memoryUsage = e.getAsFloat(A_MEMORY_USAGE)
-      start       = e(A_PROC_START).map(DateTime.parse) 
+      start       = e.getAsGTime(A_PROC_START) map (_.dateTime)
       tty         = e(A_TTY)
       user        = e(A_PROC_USER)
       virtualmem  = e.getAsInt(A_VIRTUAL_MEMORY) 
@@ -660,22 +667,6 @@ class InventoryMapper(
     }
   }
 
-  ///////////////////////// EnvironnementVariable /////////////////////////
-
-  def entryFromEnvironnementVariable(elt:EnvironmentVariable, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
-    val e = dit.NODES.EV.model(serverId,elt.name)
-    e.setOpt(elt.value, A_EV_VALUE, {x:String => x})
-    e
-  }
-  
-  def environnementVariableFromEntry(e:LDAPEntry) : Box[EnvironmentVariable] = {
-    for {
-      key   <- e(A_EV_KEY) ?~! "Missing required attribute %s in entry: %s".format(A_EV_KEY, e)
-      value = e(A_EV_VALUE)
-    } yield {
-      EnvironmentVariable(key,value)
-    }
-  }
   //////////////////Node/ NodeInventory /////////////////////////
   
     
@@ -738,7 +729,8 @@ class InventoryMapper(
    // root +=! (A_AGENTS_NAME, server.agentNames.map(x => x.toString):_*) 
     //root +=! (A_PKEYS, server.publicKeys.map(x => x.key):_*) 
     root +=! (A_SOFTWARE_DN, server.softwareIds.map(x => dit.SOFTWARE.SOFT.dn(x).toString):_*)
-
+    
+    root +=! (A_EV, server.environmentVariables.map(x => Serialization.write(x)):_*)
     //we don't know their dit...
     root +=! (A_CONTAINER_DN, server.machineId.map { case (id, status) => 
       ditService.getDit(status).MACHINES.MACHINE.dn(id).toString
@@ -750,7 +742,6 @@ class InventoryMapper(
  //   root +=! (A_ACCOUNT, server.accounts:_*)
   //  root +=! (A_NODE_TECHNIQUES, server.techniques:_*)
    // root +=! (A_LIST_OF_IP, server.serverIps:_*)
-
     val tree = LDAPTree(root)
     //now, add machine elements as children
     server.networks.foreach { x => tree.addChild(entryFromNetwork(x, dit, server.main.id)) }
@@ -792,10 +783,6 @@ class InventoryMapper(
       case e if(e.isA(OC_RUDDER_AGENT)) => agentFromEntry(e) match {
         case e:EmptyBox => log(e, "rudder agent")
          case Full(x) => server.copy( main = server.main.copy ( agents = x +: server.main.agents))
-      }
-      case e if(e.isA(OC_EV)) => environnementVariableFromEntry(e) match {
-        case e:EmptyBox => log(e, "environnement variable")
-        case Full(x) => server.copy(environmentVariables = x +: server.environmentVariables)
       }
       case e if(e.isA(OC_PROCESS)) => processFromEntry(e) match {
         case e:EmptyBox => log(e, "process")
@@ -884,6 +871,7 @@ class InventoryMapper(
       lastLoggedUser = entry(A_LAST_LOGGED_USER)
       lastLoggedUserTime = entry.getAsGTime(A_LAST_LOGGED_USER_TIME).map { _.dateTime }
       softwareIds = entry.valuesFor(A_SOFTWARE_DN).toSeq.flatMap(x => dit.SOFTWARE.SOFT.idFromDN(new DN(x)))
+      ev = entry.valuesFor(A_EV).toSeq.map(Serialization.read[EnvironmentVariable](_))
       machineId = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_CONTAINER_DN)).toList match {
         case Nil => None
         case m :: Nil => Some(m)
@@ -911,6 +899,7 @@ class InventoryMapper(
          , lastLoggedUserTime
          , machineId
          , softwareIds
+         , ev
       )
     }
   }
@@ -924,4 +913,15 @@ class InventoryMapper(
     }
   }
   
+}
+
+object Test{
+def main(args: Array[String])
+ {
+  val ev = EnvironmentVariable(name = "PATH",value =Some("/usr/bin"))
+  implicit val formats = Serialization.formats(NoTypeHints)
+  val json = Serialization.write[EnvironmentVariable](ev)
+  println(json)
+  println(Serialization.read[EnvironmentVariable](json))
+}
 }
