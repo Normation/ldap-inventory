@@ -172,7 +172,7 @@ object LDAPConstants {
   //environnement Variable
   val A_EV_KEY = "environnementVariableKey"
   val A_EV_VALUE = "environnementVariableValue"
-  //rudder
+  //Agent
   val  A_CFENGINE_KEY = "cfEngineKey"
   val A_AGENT_OWNER = "agentOwner"
   val A_SERVER_HOSTNAME = "serverHostname"
@@ -348,10 +348,7 @@ object LDAPConstants {
   OC +=(OC_EV,
       must = Set(A_EV_KEY),
       may = Set(A_EV_VALUE))
-   OC +=(OC_RUDDER_AGENT,
-      must = Set(A_AGENT_NAME),
-      may = Set( A_CFENGINE_KEY,A_AGENT_OWNER,
-          A_SERVER_HOSTNAME,A_SERVER_UUID))       
+ 
       
   OC +=(OC_UNIX_NODE, sup = OC(OC_NODE))
   OC +=(OC_LINUX_NODE, sup = OC(OC_UNIX_NODE))

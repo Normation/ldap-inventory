@@ -691,7 +691,7 @@ class InventoryMapper(
     root +=! (A_OS_KERNEL_VERSION, server.main.osDetails.kernelVersion.value)
       
     root +=! (A_ROOT_USER, server.main.rootUser)
-    root +=! (A_HOSTNAME, server.rudder.get.hostname.get)
+    root +=! (A_HOSTNAME, server.main.hostname)
     //root +=! (A_POLICY_SERVER_UUID, server.main.policyServerId.value)
     root.setOpt(server.ram, A_OS_RAM, { m: MemorySize => m.size.toString })
     root.setOpt(server.swap, A_OS_SWAP, { m: MemorySize => m.size.toString })
@@ -720,7 +720,7 @@ class InventoryMapper(
     server.networks.foreach { x => tree.addChild(entryFromNetwork(x, dit, server.main.id)) }
     server.fileSystems.foreach { x => tree.addChild(entryFromFileSystem(x, dit, server.main.id)) }
     server.vms.foreach { x => tree.addChild(entryFromVMInfo(x,dit,server.main.id))}
-    server.rudder.get.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id))}
+    server.main.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id))}
     tree
   }
 
@@ -754,7 +754,7 @@ class InventoryMapper(
       }
       case e if(e.isA(OC_RUDDER_AGENT)) => agentFromEntry(e) match {
         case e:EmptyBox => log(e, "network interface")
-         case Full(x) => server.copy( rudder = server.rudder.map{rud => rud.copy(agents = x +: rud.agents)})
+         case Full(x) => server.copy( main = server.main.copy ( agents = x +: server.main.agents))
       }
       case e if(e.isA(OC_EV)) => environnementVariableFromEntry(e) match {
         case e:EmptyBox => log(e, "network interface")
@@ -792,18 +792,14 @@ class InventoryMapper(
       //server.main info: id, status, rootUser, hostname, osDetails: all mandatories
       inventoryStatus = ditService.getInventoryStatus(dit)
       id             <- dit.NODES.NODE.idFromDN(entry.dn) ?~! missingAttr("for server id")
-      hostname       = requiredAttr(A_HOSTNAME)
+      hostname       <- requiredAttr(A_HOSTNAME)
       rootUser       <- requiredAttr(A_ROOT_USER)
-      policyServerId <- requiredAttr(A_POLICY_SERVER_UUID)
       osName         <- requiredAttr(A_OS_NAME)
       osVersion      <- requiredAttr(A_OS_VERSION).map(x => new Version(x))
       kernelVersion  <- requiredAttr(A_OS_KERNEL_VERSION).map(x => new Version(x))
       osFullName     = entry(A_OS_FULL_NAME).getOrElse("")
       osServicePack  = entry(A_OS_SERVICE_PACK)
-      agentNames     <- sequence(entry.valuesFor(A_AGENTS_NAME).toSeq){ x =>
-                      AgentType.fromValue(x) ?~! "Error when mapping value '%s' to an agent type. Allowed values are %s".
-                          format(x, AgentType.allValues.mkString(", "))
-                    }
+                    
       //now, look for the OS type
       osDetails <- {
         if(entry.isA(OC_WINDOWS_NODE)) {
@@ -861,15 +857,17 @@ class InventoryMapper(
           Some(m1)
       }
       
-      rudder= Some(Rudder(Nil,id,hostname))
+      agents = Seq[Agent]()
      // hostedVmIds = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_HOSTED_VM_DN))
       inventoryDate = entry.getAsGTime(A_INVENTORY_DATE).map { _.dateTime }
      // accounts = entry.valuesFor(A_ACCOUNT).toSeq
       //techniques = entry.valuesFor(A_NODE_TECHNIQUES).toSeq
      // serverIps = entry.valuesFor(A_LIST_OF_IP).toSeq
+      
+      main =   NodeSummary(id,inventoryStatus,rootUser,hostname, agents, osDetails)
     } yield {
       NodeInventory(
-           NodeSummary(id,inventoryStatus,rootUser, osDetails)
+           main
          , name
          , description
          , ram
@@ -885,7 +883,6 @@ class InventoryMapper(
          , softwareIds
          , Nil
          , Nil
-         , rudder
          , Nil
          , Nil
       )
