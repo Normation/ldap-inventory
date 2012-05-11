@@ -103,7 +103,10 @@ class FusionReportUnmarshaller(
       //init a node inventory
       val node = NodeInventory(NodeSummary(
           NodeId(uuidGen.newUuid), 
-          PendingInventory, "dummy-root",
+          PendingInventory,
+          "dummy-root",
+          "dummy-hostname",
+          Seq[Agent](),
           UnknownOS()
          )
       ) 
@@ -152,7 +155,7 @@ class FusionReportUnmarshaller(
         case "PORTS" => processPort(elt).foreach { x => report = report.copy( machine = report.machine.copy( ports = x +: report.machine.ports ) ) }
         case "PROCESSES" => processProcesses(elt).foreach { x => report = report.copy( node = report.node.copy ( processes = x +: report.node.processes))}
         case "REGISTEREDUSERS" => processRegisteredUsers(elt).foreach {x => report = report.copy( node = report.node.copy ( registeredUsers = x  +: report.node.registeredUsers) ) }
-        case "RUDDER" => processRudder(elt)
+        case "RUDDER" => report.copy( node = report.node.copy ( main = processRudder(elt,report.node.main) ) )
         case "SLOTS" => processSlot(elt).foreach { x => report = report.copy( machine = report.machine.copy( slots = x +: report.machine.slots ) ) }
         case "SOFTWARES" => report = report.copy( applications  = processSoftware(elt) +: report.applications )
         case "SOUNDS" => processSound(elt).foreach { x => report = report.copy( machine = report.machine.copy( sounds = x +: report.machine.sounds ) ) }
@@ -757,19 +760,18 @@ class FusionReportUnmarshaller(
     agents
   }
 
-  def processRudder(rud : NodeSeq) : Option[Rudder] = {
+  def processRudder(rud : NodeSeq, sum:NodeSummary) : NodeSummary = {
     optText(rud\"UUID") match {
 		case None =>
 			logger.debug("Ignoring entry Rudder because tag UUID is empty")
 			logger.debug(rud)
-			None
-		case Some(uuid) =>
-			Some (
-				Rudder (    
-				    hostname = optText(rud\"HOSTNAME")
-					, uuid = new NodeId(uuid)
+			sum
+		case Some(uuid) =>		
+				sum.copy (    
+				    hostname = optText(rud\"HOSTNAME").get
+					, id = new NodeId(uuid)
 				  ,	agents = processAgent(rud\"AGENT")
-				  ) )
+				  ) 
 	  }
   }
 

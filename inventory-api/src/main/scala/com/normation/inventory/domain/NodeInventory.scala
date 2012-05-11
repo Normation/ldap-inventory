@@ -87,13 +87,13 @@ case class Process (
 )extends NodeElement with HashcodeCaching
 
 case class VirtualMachine (
-    vmtype      : Option[String]
-  , subsystem   : Option[String]
-  , owner       : Option[String]
-  , name        : Option[String]
-  , status      : Option[String]
-  , vcpu        : Option[Int]
-  , memory      : Option[String]
+    vmtype      : Option[String] = None
+  , subsystem   : Option[String] = None
+  , owner       : Option[String] = None
+  , name        : Option[String] = None
+  , status      : Option[String] = None
+  , vcpu        : Option[Int] = None
+  , memory      : Option[String] = None
   , uuid        : MachineUuid
     // TODO : Maybe add an inventoryStatus field
   , description : Option[String] = None
@@ -110,14 +110,14 @@ case class Password (
     
 case class RegisteredUser (
     name               : String
-  , uid                : Option[Int]
-  , gid                : Option[Int]
-  , realname           : Option[String]
-  , expirationDate     : Option[DateTime]
-  , passord            : Option[Password]
-  , homeDir            : Option[String]
-  , commandInterpreter : Option[String]
-  , realm              : Option[String]
+  , uid                : Option[Int] = None
+  , gid                : Option[Int] = None
+  , realname           : Option[String] = None
+  , expirationDate     : Option[DateTime] = None
+  , passord            : Option[Password] = None
+  , homeDir            : Option[String] = None
+  , commandInterpreter : Option[String] = None
+  , realm              : Option[String] = None
   , description        : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
@@ -127,14 +127,8 @@ case class Agent (
 	, policyServerUUID     : Option[NodeId]
 	, cfengineKey          : Option[PublicKey]
 	, owner                : Option[String]
-)
+) 
 
-case class Rudder (
-    agents      : Seq[Agent]
-  , uuid        : NodeId
-  , hostname    : Option[String]
-	, description : Option[String] = None
-)extends NodeElement with HashcodeCaching
 
 case class EnvironmentVariable (
     name        : String
@@ -241,16 +235,14 @@ case class NodeSummary(
     id             : NodeId
   , status         : InventoryStatus
   , rootUser       : String
-  //, hostname       : String
+  , hostname       : String
+  , agents         : Seq[Agent]
   , osDetails      : OsDetails
-  //, policyServerId : NodeId
-  //agent name
-  //ipss
+  
 ) extends HashcodeCaching
 
 case class NodeInventory(
     main                 : NodeSummary
-  //not sure we want to keep that
   , name                 : Option[String] = None
   , description          : Option[String] = None
   , ram                  : Option[MemorySize] = None
@@ -265,10 +257,8 @@ case class NodeInventory(
   , softwareIds          : Seq[SoftwareUuid] = Seq()
   , processes            : Seq[Process] = Seq()
   , registeredUsers      : Seq[RegisteredUser] = Seq()
-  , rudder               : Option[Rudder] = None
   , networks             : Seq[Network] = Seq()
   , fileSystems          : Seq[FileSystem] = Seq()
-  //TODO: environment:Map[String,String]
 ) extends HashcodeCaching {
   
   /**A copy of the node with the updated main.
