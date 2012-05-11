@@ -76,8 +76,8 @@ object RudderNodeIdParsing extends FusionReportParsingExtension {
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(id) => x._2.copy( node = x._2.node.copy 
-          (main = x._2.node.main.copy ( id = new NodeId(id) ) ) ) 
+      case Some(id) => x._2.copy( node = x._2.node.copy
+          (main = x._2.node.main.copy ( id = new NodeId(id) ) ) )
     }
   }
 }
@@ -93,7 +93,6 @@ object RudderPolicyServerParsing extends FusionReportParsingExtension {
       case Some(ps) => x._2.copy( node = x._2.node.copy(main = x._2.node.main.copy
         (agents = x._2.node.main.agents.first.copy(policyServerUUID =Some(new NodeId( ps ))) +: x._2.node.main.agents.tail
             ) ) )
-   
           }
   }
 }
@@ -147,17 +146,17 @@ object RudderCpuParsing extends FusionReportParsingExtension with Loggable {
           logger.debug(p)
         case Some(name) =>
           val cpu = Processor(
-              manufacturer    = optText(p\"MANUFACTURER").map(new Manufacturer(_))
-              , arch          = optText(p\"ARCH")
-              , name          = name
-              , speed         = optText(p\"SPEED").map(_.toFloat)
-              , externalClock = optText(p\"EXTERNAL_CLOCK").map(_.toFloat)
-              , core          = optText(p\"CORE").map(_.toInt)
-              , thread        = optText(p\"THREAD").map(_.toInt)
-              , cpuid         = optText(p\"ID")
-              , stepping      = optText(p\"STEPPING").map(_.toInt)
-              , model         = optText(p\"MODEL").map(_.toInt)
-              , family        = optText(p\"FAMILY").map(_.toInt)
+                manufacturer    = optText(p\"MANUFACTURER").map(new Manufacturer(_))
+              , arch            = optText(p\"ARCH")
+              , name            = name
+              , speed           = optText(p\"SPEED").map(_.toFloat)
+              , externalClock   = optText(p\"EXTERNAL_CLOCK").map(_.toFloat)
+              , core            = optText(p\"CORE").map(_.toInt)
+              , thread          = optText(p\"THREAD").map(_.toInt)
+              , cpuid           = optText(p\"ID")
+              , stepping        = optText(p\"STEPPING").map(_.toInt)
+              , model           = optText(p\"MODEL").map(_.toInt)
+              , family          = optText(p\"FAMILY").map(_.toInt)
           )
           buf += cpu
       }
@@ -189,7 +188,7 @@ object RudderRootUserParsing extends FusionReportParsingExtension {
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     optText(x._1) match {
       case None => x._2
-      case Some(u) => x._2.copy( node = x._2.node.copyWithMain(m => m.copy(rootUser = u ))  )
+      case Some(u) => x._2.copy( node = x._2.node.copyWithMain(m => m.copy(rootUser = u ) ) )
     }
   }
 }
@@ -203,7 +202,7 @@ object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     x._2.copy( node = x._2.node.copy( main = x._2.node.main.copy
         (agents = x._2.node.main.agents.first.copy(name = processAgentName(x._1).toString()) +: x._2.node.main.agents.tail
-            ) ) 
+            ) )
     )
   }  
   def processAgentName(xml:NodeSeq) : Seq[AgentType] = {
@@ -218,21 +217,7 @@ object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable
   }
 }
 
-/* must be removed 
 
-/**
- * <TECHNIQUES>
- */
-object RudderTechniquesParsing extends FusionReportParsingExtension {
-  override def isDefinedAt(x:(Node,InventoryReport)) = { x._1.label == "TECHNIQUES" }
-  override def apply(x:(Node,InventoryReport)) : InventoryReport = {
-    x._2.copy( node = x._2.node.copy( techniques = x._2.node.techniques ++ processTechniques(x._1) ) )
-  }
-  def processTechniques(xml:NodeSeq) : Seq[String] = {
-    (xml \ "TECHNIQUE").flatMap(e => optText(e))
-  }
-}
-*/
 /**
  * <HOSTNAME>
  */
@@ -242,7 +227,7 @@ object RudderHostnameParsing extends FusionReportParsingExtension {
     optText(x._1) match {
       case None => x._2
       case Some(e) => x._2.copy( node = x._2.node.copy ( main = x._2.node.main.copy
-            (hostname =  e ) ) ) 
+            (hostname =  e ) ) )
     }
   }
 }

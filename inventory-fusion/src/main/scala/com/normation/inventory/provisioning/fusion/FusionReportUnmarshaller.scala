@@ -109,7 +109,7 @@ class FusionReportUnmarshaller(
           Seq[Agent](),
           UnknownOS()
          )
-      ) 
+      )
       
       //create a machine used as a template to modify
       val machine = MachineInventory(MachineUuid(uuidGen.newUuid), PendingInventory, PhysicalMachineType)
@@ -164,7 +164,7 @@ class FusionReportUnmarshaller(
         case "USERS" => //TODO Not sure what is it (only one login ? a logged user ?)
         case "VIDEOS" => processVideo(elt).foreach { x => report = report.copy( machine = report.machine.copy( videos = x +: report.machine.videos ) ) }
         case "VIRTUALMACHINES" => processVms(elt).foreach { x => report = report.copy(node  = report.node.copy( vms = x +: report.node.vms) ) }
-        case "VERSIONCLIENT" => report = report.copy( version = processVersion(elt)) 
+        case "VERSIONCLIENT" => report = report.copy( version = processVersion(elt))
         case x => 
           contentParsingExtensions.find {
             pf => pf.isDefinedAt(e,report)
@@ -766,12 +766,12 @@ class FusionReportUnmarshaller(
 			logger.debug("Ignoring entry Rudder because tag UUID is empty")
 			logger.debug(rud)
 			sum
-		case Some(uuid) =>		
-				sum.copy (    
-				    hostname = optText(rud\"HOSTNAME").get
-					, id = new NodeId(uuid)
-				  ,	agents = processAgent(rud\"AGENT")
-				  ) 
+		case Some(uuid) =>
+			sum.copy (
+			      hostname = optText(rud\"HOSTNAME").get
+	 		    , id = new NodeId(uuid)
+	 		    ,	agents = processAgent(rud\"AGENT")
+			    )
 	  }
   }
 

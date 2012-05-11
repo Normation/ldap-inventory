@@ -75,15 +75,15 @@ case class Network (
 }
 
 case class Process (
-		commandName   : Option[String]
-	, cpuUsage      : Option[Float] = None
-	, memory        : Option[Float] = None
-	, pid           : Int
-	, started       : Option[DateTime] = None
-	, tty           : Option[String] = None
-	, user          : Option[String] = None
-	, virtualMemory : Option[Int] = None
-	, description   : Option[String] = None
+    pid           : Int
+  , commandName   : Option[String]
+  , cpuUsage      : Option[Float]    = None
+  , memory        : Option[Float]    = None
+  , started       : Option[DateTime] = None
+  , tty           : Option[String]   = None
+  , user          : Option[String]   = None
+  , virtualMemory : Option[Int]      = None
+  , description   : Option[String]   = None
 )extends NodeElement with HashcodeCaching
 
 case class VirtualMachine (
@@ -92,7 +92,7 @@ case class VirtualMachine (
   , owner       : Option[String] = None
   , name        : Option[String] = None
   , status      : Option[String] = None
-  , vcpu        : Option[Int] = None
+  , vcpu        : Option[Int]    = None
   , memory      : Option[String] = None
   , uuid        : MachineUuid
     // TODO : Maybe add an inventoryStatus field
@@ -101,24 +101,24 @@ case class VirtualMachine (
 
 
 case class Password (
-    age              : Option[Int]
-  , minimumAge       : Option[Int]
-  , maximumAge       : Option[Int]
-  , warningPeriod    : Option[Int]
-  , inactivityPeriod : Option[Int]
+    age              : Option[Int] = None
+  , minimumAge       : Option[Int] = None
+  , maximumAge       : Option[Int] = None
+  , warningPeriod    : Option[Int] = None
+  , inactivityPeriod : Option[Int] = None
     )
-    
+
 case class RegisteredUser (
     name               : String
-  , uid                : Option[Int] = None
-  , gid                : Option[Int] = None
-  , realname           : Option[String] = None
+  , uid                : Option[Int]      = None
+  , gid                : Option[Int]      = None
+  , realname           : Option[String]   = None
   , expirationDate     : Option[DateTime] = None
   , passord            : Option[Password] = None
-  , homeDir            : Option[String] = None
-  , commandInterpreter : Option[String] = None
-  , realm              : Option[String] = None
-  , description        : Option[String] = None
+  , homeDir            : Option[String]   = None
+  , commandInterpreter : Option[String]   = None
+  , realm              : Option[String]   = None
+  , description        : Option[String]   = None
 ) extends NodeElement with HashcodeCaching
 
 case class Agent (
@@ -127,12 +127,11 @@ case class Agent (
 	, policyServerUUID     : Option[NodeId]
 	, cfengineKey          : Option[PublicKey]
 	, owner                : Option[String]
-) 
-
+)
 
 case class EnvironmentVariable (
     name        : String
-  , value       : Option[String]
+  , value       : Option[String] = None
   , description : Option[String] = None
 ) extends NodeElement with HashcodeCaching
 
@@ -238,27 +237,26 @@ case class NodeSummary(
   , hostname       : String
   , agents         : Seq[Agent]
   , osDetails      : OsDetails
-  
 ) extends HashcodeCaching
 
 case class NodeInventory(
     main                 : NodeSummary
-  , name                 : Option[String] = None
-  , description          : Option[String] = None
+  , name                 : Option[String]     = None
+  , description          : Option[String]     = None
   , ram                  : Option[MemorySize] = None
   , swap                 : Option[MemorySize] = None
-  , inventoryDate        : Option[DateTime] = None
-  , archDescription      : Option[String] = None
-  , lastLoggedUser       : Option[String] = None
-  , lastLoggedUserTime   : Option[DateTime] = None
-  , environmentVariables : Seq[EnvironmentVariable] = Seq()
+  , inventoryDate        : Option[DateTime]   = None
+  , archDescription      : Option[String]     = None
+  , lastLoggedUser       : Option[String]     = None
+  , lastLoggedUserTime   : Option[DateTime]   = None
   , machineId            : Option[(MachineUuid,InventoryStatus)] = None //if we want several ids, we would have to ass an "alternate machine" field
-  , vms                  : Seq[VirtualMachine] = Seq()
-  , softwareIds          : Seq[SoftwareUuid] = Seq()
-  , processes            : Seq[Process] = Seq()
-  , registeredUsers      : Seq[RegisteredUser] = Seq()
-  , networks             : Seq[Network] = Seq()
-  , fileSystems          : Seq[FileSystem] = Seq()
+  , softwareIds          : Seq[SoftwareUuid]        = Seq()
+  , environmentVariables : Seq[EnvironmentVariable] = Seq()
+  , vms                  : Seq[VirtualMachine]      = Seq()
+  , processes            : Seq[Process]             = Seq()
+  , registeredUsers      : Seq[RegisteredUser]      = Seq()
+  , networks             : Seq[Network]             = Seq()
+  , fileSystems          : Seq[FileSystem]          = Seq()
 ) extends HashcodeCaching {
   
   /**A copy of the node with the updated main.

@@ -134,7 +134,7 @@ class InventoryMapper(
       releaseDate = e.getAsGTime(A_RELEASE_DATE) map { _.dateTime }
       editor = e(A_EDITOR) map { x => new SoftwareEditor(x) }
     } yield {
-      Bios(name, desc, version, editor, releaseDate, quantity)
+      Bios( name, desc, version, editor, releaseDate, quantity )
     }
   }
   
@@ -157,7 +157,7 @@ class InventoryMapper(
       smeType = e(A_SME_TYPE)
       quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
     } yield {
-      Controller(name, desc, manufacturer, smeType, quantity)
+      Controller( name, desc, manufacturer, smeType, quantity )
     }
   }
   
@@ -188,7 +188,9 @@ class InventoryMapper(
       memType = e(A_MEMORY_TYPE)
       serial = e(A_SERIAL_NUMBER)
     } yield {
-      MemorySlot(slotNumber, name, desc, capacity, caption, speed, memType, serial, quantity)
+      MemorySlot(
+            slotNumber, name, desc, capacity, caption
+          , speed, memType, serial, quantity )
     }
   }
 
@@ -209,7 +211,7 @@ class InventoryMapper(
       smeType = e(A_SME_TYPE)
       quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
     } yield {
-      Port(name, desc, smeType, quantity)
+      Port( name, desc, smeType, quantity )
     }
   }
   
@@ -227,7 +229,7 @@ class InventoryMapper(
     e.setOpt(elt.core, A_CORE, {x:Int => x.toString()})
     e.setOpt(elt.thread, A_THREAD, {x:Int => x.toString()})
     e.setOpt(elt.familyName, A_PROCESSOR_FAMILY_NAME ,{x:String => x} )
-    e.setOpt(elt.arch, A_PROCESSOR_ARCHITECTURE, {x:String => x} ) 
+    e.setOpt(elt.arch, A_PROCESSOR_ARCHITECTURE, {x:String => x} )
     e.setOpt(elt.cpuid, A_CPUID, {x:String => x})
     e.setOpt(elt.externalClock, A_EXTERNAL_CLOCK, {x:Float => x.toString()})
     e
@@ -250,7 +252,9 @@ class InventoryMapper(
       externalClock = e.getAsFloat(A_EXTERNAL_CLOCK)
       cpuid = e(A_CPUID)
     } yield {
-      Processor(manufacturer, name, arch, desc, speed, externalClock, core, thread, cpuid, stepping, family, familyName, model, quantity)
+      Processor(
+            manufacturer, name, arch, desc, speed, externalClock, core
+          , thread, cpuid, stepping, family, familyName, model, quantity )
     }
   }
   
@@ -271,7 +275,7 @@ class InventoryMapper(
       status = e(A_STATUS)
       quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
     } yield {
-      Slot(name, desc, status, quantity)
+      Slot( name, desc, status, quantity )
     }
   }
   
@@ -290,7 +294,7 @@ class InventoryMapper(
       desc = e(A_DESCRIPTION)
       quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
     } yield {
-      Sound(name, desc, quantity)
+      Sound( name, desc, quantity )
     }
   }
   
@@ -322,7 +326,8 @@ class InventoryMapper(
       smeType = e(A_SME_TYPE)
       quantity = e.getAsInt(A_QUANTITY).getOrElse(1)
     } yield {
-      Storage(name, desc, size, firmware, manufacturer, model, serialNumber, smeType, quantity)
+      Storage( name, desc, size, firmware, manufacturer
+          , model, serialNumber, smeType, quantity )
     }
   }
 
@@ -348,7 +353,7 @@ class InventoryMapper(
       memory = e(A_MEMORY_CAPACITY).map{x => MemorySize(x)}
       resolution = e (A_VIDEO_RESOLUTION)
     } yield {
-      Video(name, desc, chipset, memory, resolution, quantity)
+      Video( name, desc, chipset, memory, resolution, quantity )
     }
   }
   
@@ -372,13 +377,13 @@ class InventoryMapper(
   private[this] def machineTypeFromObjectClasses(objectClassNames:Set[String]) = {
     def objectClass2MachineType(oc : LDAPObjectClass) : Option[MachineType] = {
       oc match {
-        case LDAPObjectClass(OC_VM,_,_,_) => Some(VirtualMachineType(UnknownVmType))
-        case LDAPObjectClass(OC_VM_VIRTUALBOX,_,_,_) => Some(VirtualMachineType(VirtualBox))
-        case LDAPObjectClass(OC_VM_XEN,_,_,_) => Some(VirtualMachineType(Xen))
-        case LDAPObjectClass(OC_VM_VMWARE,_,_,_) => Some(VirtualMachineType(VMWare))
+        case LDAPObjectClass(OC_VM,_,_,_)              => Some(VirtualMachineType(UnknownVmType))
+        case LDAPObjectClass(OC_VM_VIRTUALBOX,_,_,_)   => Some(VirtualMachineType(VirtualBox))
+        case LDAPObjectClass(OC_VM_XEN,_,_,_)          => Some(VirtualMachineType(Xen))
+        case LDAPObjectClass(OC_VM_VMWARE,_,_,_)       => Some(VirtualMachineType(VMWare))
         case LDAPObjectClass(OC_VM_SOLARIS_ZONE,_,_,_) => Some(VirtualMachineType(SolarisZone))
-        case LDAPObjectClass(OC_VM_QEMU,_,_,_) => Some(VirtualMachineType(QEmu))
-        case LDAPObjectClass(OC_PM,_,_,_) => Some(PhysicalMachineType)
+        case LDAPObjectClass(OC_VM_QEMU,_,_,_)         => Some(VirtualMachineType(QEmu))
+        case LDAPObjectClass(OC_PM,_,_,_)              => Some(PhysicalMachineType)
         case _ => None
       }
     }
@@ -399,15 +404,15 @@ class InventoryMapper(
 
     val tree = LDAPTree(root)
     //now, add machine elements as children
-    machine.bios.foreach { x => tree.addChild(entryFromBios(x, dit, machine.id)) }
+    machine.bios.foreach        { x => tree.addChild(entryFromBios(x, dit, machine.id)) }
     machine.controllers.foreach { x => tree.addChild(entryFromController(x, dit, machine.id)) }
-    machine.memories.foreach { x => tree.addChild(entryFromMemorySlot(x, dit, machine.id)) }
-    machine.ports.foreach { x => tree.addChild(entryFromPort(x, dit, machine.id)) }
-    machine.processors.foreach { x => tree.addChild(entryFromProcessor(x, dit, machine.id)) }
-    machine.slots.foreach { x => tree.addChild(entryFromSlot(x, dit, machine.id)) }
-    machine.sounds.foreach { x => tree.addChild(entryFromSound(x, dit, machine.id)) }
-    machine.storages.foreach { x => tree.addChild(entryFromStorage(x, dit, machine.id)) }
-    machine.videos.foreach { x => tree.addChild(entryFromVideo(x, dit, machine.id)) }
+    machine.memories.foreach    { x => tree.addChild(entryFromMemorySlot(x, dit, machine.id)) }
+    machine.ports.foreach       { x => tree.addChild(entryFromPort(x, dit, machine.id)) }
+    machine.processors.foreach  { x => tree.addChild(entryFromProcessor(x, dit, machine.id)) }
+    machine.slots.foreach       { x => tree.addChild(entryFromSlot(x, dit, machine.id)) }
+    machine.sounds.foreach      { x => tree.addChild(entryFromSound(x, dit, machine.id)) }
+    machine.storages.foreach    { x => tree.addChild(entryFromStorage(x, dit, machine.id)) }
+    machine.videos.foreach      { x => tree.addChild(entryFromVideo(x, dit, machine.id)) }
     
     //ok !
     tree
@@ -497,21 +502,21 @@ class InventoryMapper(
 
   def entryFromFileSystem(elt:FileSystem, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
     val e = dit.NODES.FILESYSTEM.model(serverId,elt.mountPoint)
-    e.setOpt(elt.name, A_NAME, {x:String => x})
+    e.setOpt(elt.name,        A_NAME,        {x:String => x})
     e.setOpt(elt.description, A_DESCRIPTION, {x:String => x})
-    e.setOpt(elt.fileCount,A_FILE_COUNT,{x:Int => x.toString})
-    e.setOpt(elt.freeSpace,A_FREE_SPACE,{x:MemorySize => x.size.toString})
-    e.setOpt(elt.totalSpace,A_TOTAL_SPACE,{x:MemorySize => x.size.toString})
+    e.setOpt(elt.fileCount,   A_FILE_COUNT,  {x:Int => x.toString})
+    e.setOpt(elt.freeSpace,   A_FREE_SPACE,  {x:MemorySize => x.size.toString})
+    e.setOpt(elt.totalSpace,  A_TOTAL_SPACE, {x:MemorySize => x.size.toString})
     e
   }
   
   def fileSystemFromEntry(e:LDAPEntry) : Box[FileSystem] = {
     for {
       mountPoint <- e(A_MOUNT_POINT) ?~! "Missing required attribute %s in entry: %s".format(A_MOUNT_POINT, e)
-      name = e(A_NAME)
-      desc = e(A_DESCRIPTION)
-      fileCount = e.getAsInt(A_FILE_COUNT)
-      freeSpace = e.getAsLong(A_FREE_SPACE).map(new MemorySize(_))
+      name       = e(A_NAME)
+      desc       = e(A_DESCRIPTION)
+      fileCount  = e.getAsInt(A_FILE_COUNT)
+      freeSpace  = e.getAsLong(A_FREE_SPACE).map(new MemorySize(_))
       totalSpace = e.getAsLong(A_TOTAL_SPACE).map(new MemorySize(_))
     } yield {
       FileSystem(mountPoint, name, desc, fileCount, freeSpace, totalSpace)
@@ -530,15 +535,15 @@ class InventoryMapper(
     } else {
       e +=!(A_NETIF_ADDRESS,elt.ifAddresses.map(_.getHostAddress):_*)
     }
-    e.setOpt(elt.ifDhcp,A_NETIF_DHCP,{x:InetAddress => x.getHostAddress})
-    e.setOpt(elt.ifGateway,A_NETIF_GATEWAY,{x:InetAddress => x.getHostAddress})
-    e.setOpt(elt.ifMask,A_NETIF_MASK,{x:InetAddress => x.getHostAddress})
-    e.setOpt(elt.ifSubnet,A_NETIF_SUBNET,{x:InetAddress => x.getHostAddress})
-    e.setOpt(elt.macAddress,A_NETIF_MAC,{x:String => x})
-    e.setOpt(elt.status,A_STATUS,{x:String => x})
-    e.setOpt(elt.ifType,A_NETIF_TYPE,{x:String => x})
-    e.setOpt(elt.speed,A_SPEED,{x:String => x})
-    e.setOpt(elt.typeMib,A_NETIF_TYPE_MIB,{x:String => x})
+    e.setOpt(elt.ifDhcp,     A_NETIF_DHCP,     {x:InetAddress => x.getHostAddress})
+    e.setOpt(elt.ifGateway,  A_NETIF_GATEWAY,  {x:InetAddress => x.getHostAddress})
+    e.setOpt(elt.ifMask,     A_NETIF_MASK,     {x:InetAddress => x.getHostAddress})
+    e.setOpt(elt.ifSubnet,   A_NETIF_SUBNET,   {x:InetAddress => x.getHostAddress})
+    e.setOpt(elt.macAddress, A_NETIF_MAC,      {x:String => x})
+    e.setOpt(elt.status,     A_STATUS,         {x:String => x})
+    e.setOpt(elt.ifType,     A_NETIF_TYPE,     {x:String => x})
+    e.setOpt(elt.speed,      A_SPEED,          {x:String => x})
+    e.setOpt(elt.typeMib,    A_NETIF_TYPE_MIB, {x:String => x})
     e
   }
   
@@ -550,51 +555,51 @@ class InventoryMapper(
         i <- e.valuesFor(A_NETIF_ADDRESS).toSeq
         a <- getAddressByName(i)
       } yield a
-      ifDhcp = e(A_NETIF_DHCP).flatMap(getAddressByName(_))
-      ifGateway = e(A_NETIF_GATEWAY).flatMap(getAddressByName(_))
-      ifMask = e(A_NETIF_MASK).flatMap(getAddressByName(_))
-      ifSubnet = e(A_NETIF_SUBNET).flatMap(getAddressByName(_))
+      ifDhcp     = e(A_NETIF_DHCP).flatMap(getAddressByName(_))
+      ifGateway  = e(A_NETIF_GATEWAY).flatMap(getAddressByName(_))
+      ifMask     = e(A_NETIF_MASK).flatMap(getAddressByName(_))
+      ifSubnet   = e(A_NETIF_SUBNET).flatMap(getAddressByName(_))
       macAddress = e(A_NETIF_MAC)
-      status = e(A_STATUS)
-      ifType = e(A_NETIF_TYPE)
-      speed = e(A_SPEED)
-      typeMib = e(A_NETIF_TYPE_MIB)
+      status     = e(A_STATUS)
+      ifType     = e(A_NETIF_TYPE)
+      speed      = e(A_SPEED)
+      typeMib    = e(A_NETIF_TYPE_MIB)
     } yield {
-      Network(name, desc, ifAddresses, ifDhcp, ifGateway, ifMask, ifSubnet, macAddress, status, ifType, speed, typeMib)
+      Network( name, desc, ifAddresses, ifDhcp, ifGateway
+          , ifMask, ifSubnet, macAddress, status, ifType, speed, typeMib )
     }
   }
- 
-  
+
     ///////////////////////// VM INFO /////////////////////////
 
 
   def entryFromVMInfo(elt:VirtualMachine, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
     val e = dit.NODES.NETWORK.model(serverId,elt.uuid.value)
-    e.setOpt(elt.description, A_DESCRIPTION, {x:String => x})
-    e.setOpt(elt.memory,A_VM_MEMORY,{x:String => x})
-    e.setOpt(elt.name,A_VM_NAME,{x:String => x})
-    e.setOpt(elt.owner,A_VM_OWNER,{x:String => x})
-    e.setOpt(elt.status,A_VM_STATUS,{x:String => x})
-    e.setOpt(elt.subsystem,A_VM_SUBSYSTEM,{x:String => x})
-    e.setOpt(elt.vcpu,A_VM_CPU,{x:Int => x.toString()})
-    e.setOpt(elt.vmtype,A_VM_TYPE,{x:String => x})
+    e.setOpt(elt.description, A_DESCRIPTION,  {x:String => x})
+    e.setOpt(elt.memory,      A_VM_MEMORY,    {x:String => x})
+    e.setOpt(elt.name,        A_VM_NAME,      {x:String => x})
+    e.setOpt(elt.owner,       A_VM_OWNER,     {x:String => x})
+    e.setOpt(elt.status,      A_VM_STATUS,    {x:String => x})
+    e.setOpt(elt.subsystem,   A_VM_SUBSYSTEM, {x:String => x})
+    e.setOpt(elt.vcpu,        A_VM_CPU,       {x:Int => x.toString()})
+    e.setOpt(elt.vmtype,      A_VM_TYPE,      {x:String => x})
     e
   }
-  
+
   def vmFromEntry(e:LDAPEntry) : Box[VirtualMachine] = {
     for {
       vmid <- e(A_VM_ID) ?~! "Missing required attribute %s in entry: %s".format(A_VM_ID, e)
-        
-      memory = e(A_VM_MEMORY)
-      name = e(A_VM_NAME)
-      owner = e(A_VM_OWNER)
-      status = e(A_VM_STATUS)
+
+      memory    = e(A_VM_MEMORY)
+      name      = e(A_VM_NAME)
+      owner     = e(A_VM_OWNER)
+      status    = e(A_VM_STATUS)
       subsystem = e(A_VM_SUBSYSTEM)
-      vcpu = e.getAsInt(A_VM_CPU)
-      vmtype = e(A_VM_TYPE)
-      
+      vcpu      = e.getAsInt(A_VM_CPU)
+      vmtype    = e(A_VM_TYPE)
+
     } yield {
-      VirtualMachine(vmtype,subsystem,owner,name,status,vcpu,memory,new MachineUuid(vmid))
+      VirtualMachine( vmtype,subsystem,owner,name,status,vcpu,memory,new MachineUuid(vmid) )
     }
   }
       ///////////////////////// PROCESSES /////////////////////////
@@ -602,58 +607,60 @@ class InventoryMapper(
 
   def entryFromProcess(elt:Process, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
     val e = dit.NODES.PROCESS.model(serverId,elt.pid.toString())
-    e.setOpt(elt.commandName, A_CMD_NAME, {x:String => x})
-    e.setOpt(elt.cpuUsage,A_CPU_USAGE,{x:Float => x.toString()})
-    e.setOpt(elt.memory,A_MEMORY_USAGE,{x:Float => x.toString()})
-    e.setOpt(elt.started,A_PROC_START,{x:DateTime => x.toString()})
-    e.setOpt(elt.tty,A_TTY,{x:String => x})
-    e.setOpt(elt.user,A_PROC_USER,{x:String => x})
-    e.setOpt(elt.virtualMemory,A_VIRTUAL_MEMORY,{x:Int => x.toString()})
+    e.setOpt(elt.commandName,   A_CMD_NAME,       {x:String => x})
+    e.setOpt(elt.cpuUsage,      A_CPU_USAGE,      {x:Float => x.toString()})
+    e.setOpt(elt.memory,        A_MEMORY_USAGE,   {x:Float => x.toString()})
+    e.setOpt(elt.started,       A_PROC_START,     {x:DateTime => x.toString()})
+    e.setOpt(elt.tty,           A_TTY,            {x:String => x})
+    e.setOpt(elt.user,          A_PROC_USER,      {x:String => x})
+    e.setOpt(elt.virtualMemory, A_VIRTUAL_MEMORY, {x:Int => x.toString()})
     e
   }
-  
+
   def processFromEntry(e:LDAPEntry) : Box[Process] = {
     for {
       pid <- e.getAsInt(A_PID) ?~! "Missing required attribute %s in entry: %s".format(A_PID, e)
-      cmd = e(A_CMD_NAME)
-      cpuUsage = e.getAsFloat(A_CPU_USAGE)
+
+      cmd         = e(A_CMD_NAME)
+      cpuUsage    = e.getAsFloat(A_CPU_USAGE)
       memoryUsage = e.getAsFloat(A_MEMORY_USAGE)
-      start = e(A_PROC_START).map(DateTime.parse) 
-      tty = e(A_TTY)
-      user = e(A_PROC_USER)
-      virtualmem = e.getAsInt(A_VIRTUAL_MEMORY) 
-      
+      start       = e(A_PROC_START).map(DateTime.parse) 
+      tty         = e(A_TTY)
+      user        = e(A_PROC_USER)
+      virtualmem  = e.getAsInt(A_VIRTUAL_MEMORY) 
+
     } yield {
-      Process(cmd,cpuUsage,memoryUsage,pid,start, tty, user, virtualmem)
+      Process(pid,cmd,cpuUsage,memoryUsage,start, tty, user, virtualmem)
     }
   }
-    ///////////////////////// RUDDER AGENTS /////////////////////////
+
+  ///////////////////////// RUDDER AGENTS /////////////////////////
 
 
   def entryFromAgent(elt:Agent, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
     val e = dit.NODES.AGENT.model(serverId,elt.name)
-    e.setOpt(elt.cfengineKey, A_CFENGINE_KEY, {x:PublicKey => x.key})
-    e.setOpt(elt.owner,A_AGENT_OWNER,{x:String => x})
-    e.setOpt(elt.policyServerHostname,A_SERVER_HOSTNAME,{x:String => x})
-    e.setOpt(elt.policyServerUUID,A_SERVER_UUID,{x:NodeId => x.value})
+    e.setOpt(elt.cfengineKey,          A_CFENGINE_KEY,    {x:PublicKey => x.key})
+    e.setOpt(elt.owner,                A_AGENT_OWNER,     {x:String => x})
+    e.setOpt(elt.policyServerHostname, A_SERVER_HOSTNAME, {x:String => x})
+    e.setOpt(elt.policyServerUUID,     A_SERVER_UUID,     {x:NodeId => x.value})
     e
   }
-  
+
   def agentFromEntry(e:LDAPEntry) : Box[Agent] = {
     for {
       name <- e(A_AGENT_NAME) ?~! "Missing required attribute %s in entry: %s".format(A_AGENT_NAME, e)
-      cfengineKey = e(A_CFENGINE_KEY)
-      owner = e(A_AGENT_OWNER)
+      cfengineKey          = e(A_CFENGINE_KEY)
+      owner                = e(A_AGENT_OWNER)
       policyServerHostname = e(A_SERVER_HOSTNAME)
-      policyServerUUID = e(A_SERVER_UUID)
-      
+      policyServerUUID     = e(A_SERVER_UUID)  
     } yield {
  
-      Agent(name,policyServerHostname,Some(new NodeId(policyServerUUID.get)),Some(PublicKey(cfengineKey.get)),owner)
+      Agent( name, policyServerHostname, policyServerUUID.map(new NodeId(_))
+          , cfengineKey.map(PublicKey(_)), owner)
     }
   }
-  
-    ///////////////////////// EnvironnementVariable /////////////////////////
+
+  ///////////////////////// EnvironnementVariable /////////////////////////
 
   def entryFromEnvironnementVariable(elt:EnvironmentVariable, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
     val e = dit.NODES.EV.model(serverId,elt.name)
@@ -663,7 +670,7 @@ class InventoryMapper(
   
   def environnementVariableFromEntry(e:LDAPEntry) : Box[EnvironmentVariable] = {
     for {
-      key <- e(A_EV_KEY) ?~! "Missing required attribute %s in entry: %s".format(A_EV_KEY, e)
+      key   <- e(A_EV_KEY) ?~! "Missing required attribute %s in entry: %s".format(A_EV_KEY, e)
       value = e(A_EV_VALUE)
     } yield {
       EnvironmentVariable(key,value)
@@ -833,7 +840,6 @@ class InventoryMapper(
       kernelVersion  <- requiredAttr(A_OS_KERNEL_VERSION).map(x => new Version(x))
       osFullName     = entry(A_OS_FULL_NAME).getOrElse("")
       osServicePack  = entry(A_OS_SERVICE_PACK)
-                    
       //now, look for the OS type
       osDetails <- {
         if(entry.isA(OC_WINDOWS_NODE)) {
@@ -877,7 +883,6 @@ class InventoryMapper(
       
       lastLoggedUser = entry(A_LAST_LOGGED_USER)
       lastLoggedUserTime = entry.getAsGTime(A_LAST_LOGGED_USER_TIME).map { _.dateTime }
-      //publicKeys = entry.valuesFor(A_PKEYS).map(k => PublicKey(k))
       softwareIds = entry.valuesFor(A_SOFTWARE_DN).toSeq.flatMap(x => dit.SOFTWARE.SOFT.idFromDN(new DN(x)))
       machineId = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_CONTAINER_DN)).toList match {
         case Nil => None
@@ -890,14 +895,8 @@ class InventoryMapper(
               )
           Some(m1)
       }
-      
       agents = Seq[Agent]()
-     // hostedVmIds = mapSeqStringToMachineIdAndStatus(entry.valuesFor(A_HOSTED_VM_DN))
       inventoryDate = entry.getAsGTime(A_INVENTORY_DATE).map { _.dateTime }
-     // accounts = entry.valuesFor(A_ACCOUNT).toSeq
-      //techniques = entry.valuesFor(A_NODE_TECHNIQUES).toSeq
-     // serverIps = entry.valuesFor(A_LIST_OF_IP).toSeq
-      
       main =   NodeSummary(id,inventoryStatus,rootUser,hostname, agents, osDetails)
     } yield {
       NodeInventory(
@@ -908,17 +907,10 @@ class InventoryMapper(
          , swap
          , inventoryDate
          , arch
-  
          , lastLoggedUser
          , lastLoggedUserTime
-         , Nil
          , machineId
-         , Nil
          , softwareIds
-         , Nil
-         , Nil
-         , Nil
-         , Nil
       )
     }
   }
