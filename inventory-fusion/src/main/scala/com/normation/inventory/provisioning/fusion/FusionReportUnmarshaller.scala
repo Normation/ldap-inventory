@@ -718,18 +718,18 @@ class FusionReportUnmarshaller(
   }
 
   def processProcesses(proc : NodeSeq) : Option[Process] = {
-	  optText(proc\"CMD") match {
+	  optText(proc\"PID") match {
 	  case None =>
-	    logger.debug("Ignoring entry Process because tag CMD is empty")
+	    logger.debug("Ignoring entry Process because tag PID is empty")
 	    logger.debug(proc)
 	    None
-	  case Some(cmd) =>
+	  case Some(pid) =>
 	    Some (
 	      Process(
-	            commandName   = cmd
+	            pid   = pid.toInt
 	          , cpuUsage      = optText(proc\"CPUUSAGE").map(_.toFloat)
 	          , memory        = optText(proc\"MEMORY").map(_.toFloat)
-	          , pid           = optText(proc\"PID").map(_.toInt)
+	          , commandName           = optText(proc\"CMD")
 	          , started       = optText(proc\"STARTED").map(DateTime.parse)
 	          , tty           = optText(proc\"TTY")
 	          , user          = optText(proc\"USER")

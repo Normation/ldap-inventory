@@ -75,10 +75,10 @@ case class Network (
 }
 
 case class Process (
-		commandName   : String
+		commandName   : Option[String]
 	, cpuUsage      : Option[Float] = None
 	, memory        : Option[Float] = None
-	, pid           : Option[Int] = None
+	, pid           : Int
 	, started       : Option[DateTime] = None
 	, tty           : Option[String] = None
 	, user          : Option[String] = None
