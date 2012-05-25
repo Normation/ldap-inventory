@@ -37,6 +37,7 @@ package com.normation.inventory.services.provisioning
 import com.normation.inventory.domain.InventoryReport
 import com.normation.utils.Control.pipeline
 import net.liftweb.common.{Box,Full,Empty,EmptyBox,Failure}
+import org.slf4j.LoggerFactory
 
 /**
  * 
@@ -85,6 +86,7 @@ trait PipelinedReportSaver[R] extends ReportSaver[R] {
   def commitChange(report:InventoryReport) : Box[R]
   
   override def save(report:InventoryReport) : Box[R] = {
+      val logger = LoggerFactory.getLogger(classOf[LoggerFactory])
     for {
       /*
        * Firstly, we let the chance to third part contributor to
@@ -96,6 +98,7 @@ trait PipelinedReportSaver[R] extends ReportSaver[R] {
        */
       postPreCommitReport <- pipeline(preCommitPipeline, report){ (preCommit, currentReport) =>
         try {
+                     logger.info("before precommit vms are %s precommit is %s".format(currentReport.node.vms,preCommit))
           preCommit(currentReport) ?~! "Error in preCommit pipeline with processor '%s', abort".format(preCommit.name)
         } catch {
           case ex:Exception => Failure("Exception in preCommit pipeline with processor '%s', abort".format(preCommit.name), Full(ex), Empty)
@@ -104,7 +107,9 @@ trait PipelinedReportSaver[R] extends ReportSaver[R] {
       /*
        * commit change - no rollback !
        */
+
       commitedChange <- try {
+             logger.info("before commit vms are %s".format(postPreCommitReport.node.vms))
           commitChange(postPreCommitReport)
         } catch {
           case ex:Exception => Failure("Exception when commiting inventory, abort.", Full(ex), Empty)

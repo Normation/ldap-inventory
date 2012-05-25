@@ -77,6 +77,7 @@ class DefaultReportSaver(
      * that an LDAPException in one don't stop the
      * other to be saved
      */
+    logger.info("vms in commit change are %s".format(report.node.vms))
     var results = List[Box[Seq[LDIFChangeRecord]]]()
     
     //we really want to save each software, and not the software tree as a whole - just think about the diff...

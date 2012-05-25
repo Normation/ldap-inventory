@@ -127,7 +127,7 @@ object AddIpValues extends PreCommit {
 
     val ips = report.node.networks.flatMap(x => x.ifAddresses).map(x => x.getHostAddress() )
     
-    Full(report.copy( node = report.node.copy( serverIps = ips ) ) )
+    Full(report.copy( node = report.node.copy( main = report.node.main ) ) )
     
   }
 }

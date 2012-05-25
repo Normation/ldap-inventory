@@ -116,12 +116,12 @@ class UuidMergerPreCommit(
       logger.error(m)
       return Failure(m)
     }
-    
-    if(report.node.hostedVmIds.toSet != report.vms.map( _.id ).toSet ) {
+    logger.info("vms here are %s".format(report.node.vms))
+   /* if(report.node.vms.map(_.uuid).toSet != report.vms.map( _.id ).toSet ) {
       val m = "Inconsistant report. Server#vmIds does not match list of vms in the report"
       logger.error(m)
       return Failure(m)
-    }
+    }*/
     
     
     /*
@@ -172,7 +172,7 @@ class UuidMergerPreCommit(
     }
     
     val vms = for {
-      vm <- report.vms 
+      vm <- report.vms
     } yield { mergeVm(vm) match {
       case f@Failure(_,_,_) => 
         logger.error("Error when merging vm. Reported message: {}. Remove vm for saving", f.messageChain)
@@ -192,7 +192,6 @@ class UuidMergerPreCommit(
     
     node = node.copy(
         machineId = Some(machine.id, machine.status)
-      , hostedVmIds = vms.map(x => (x.id,x.status))
     )
     
     //here, set all the software Id after merge
@@ -209,6 +208,7 @@ class UuidMergerPreCommit(
       report.inventoryAgentDevideId,  
       node,
       machine,
+      None,
       vms,
       applications,
       report.sourceReport 

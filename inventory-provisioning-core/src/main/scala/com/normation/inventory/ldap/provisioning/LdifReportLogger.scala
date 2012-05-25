@@ -118,7 +118,7 @@ class DefaultLDIFReportLogger(val LDIFLogDir:String = DefaultLDIFReportLogger.de
         
         
       } catch {
-        case e:Exception => logger.error("Exception when loggin (ignored)",e)
+        case e:Exception => logger.error("Exception when loggin (ignored) %s".format(e.getMessage()),e)
       } finally {
         if(null != writer) writer.close
       }

@@ -108,6 +108,7 @@ class FusionReportEndpoint(
 
           (unmarshaller.fromXml(reportFile.getName,in) ?~! "Can't parse the input report, aborting") match {
             case Full(report) if(null != report) => 
+              logger.info("after parsing vms is %s".format(report.node.vms))
               logger.info("Report '%s' parsed in %s, sending to save engine.".format(reportFile.getOriginalFilename, printer.print(new Duration(start, System.currentTimeMillis).toPeriod)))
               //send report to asynchronous report processor
               ReportProcessor ! report
@@ -158,8 +159,9 @@ class FusionReportEndpoint(
     override def act = {
       loop {
         react {
-          case i:InventoryReport => saveReport(i)
-        }
+          case i:InventoryReport =>           logger.info("before saving  vms is %s".format(i.node.vms))
+              saveReport(i)
+        logger.info("AFTER saving  vms is %s".format(i.node.vms))}
       }
     }
   }

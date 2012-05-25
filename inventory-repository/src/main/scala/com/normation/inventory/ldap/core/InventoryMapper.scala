@@ -55,6 +55,11 @@ import com.normation.inventory.domain.EnvironmentVariable
 import com.normation.inventory.domain.EnvironmentVariable
 import net.liftweb.json.Serialization
 import com.normation.inventory.domain.EnvironmentVariable
+import org.joda.time.DateTime
+import com.normation.inventory.domain.Password
+import net.liftweb.json.Serializer
+import net.liftweb.json.Serializer
+import net.liftweb.json.Serialization
 
 
 
@@ -465,7 +470,7 @@ class InventoryMapper(
         case e:EmptyBox => log(e, "controller")
         case Full(x) => machine.copy( controllers = x +: machine.controllers)
       }
-      case e if(e.isA(OC_PROCESSOR)) => processorFromEntry(e) match {
+     case e if(e.isA(OC_PROCESSOR)) => processorFromEntry(e) match {
         case e:EmptyBox => log(e, "processor")
         case Full(x) => machine.copy( processors = x +: machine.processors)
       }
@@ -478,7 +483,7 @@ class InventoryMapper(
         case Full(x) => machine.copy( videos = x +: machine.videos)
       }
       case e => 
-        logger.error("Unknow entry type for a machine element, that entry will be ignored: %s".format(e))
+        logger.error("Unknown entry type for a machine element, that entry will be ignored: %s".format(e))
         machine
     }
     
@@ -581,7 +586,7 @@ class InventoryMapper(
 
 
   def entryFromVMInfo(elt:VirtualMachine, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
-    val e = dit.NODES.NETWORK.model(serverId,elt.uuid.value)
+    val e = dit.NODES.VM.model(serverId,elt.uuid.value)
     e.setOpt(elt.description, A_DESCRIPTION,  {x:String => x})
     e.setOpt(elt.memory,      A_VM_MEMORY,    {x:String => x})
     e.setOpt(elt.name,        A_VM_NAME,      {x:String => x})
@@ -590,6 +595,7 @@ class InventoryMapper(
     e.setOpt(elt.subsystem,   A_VM_SUBSYSTEM, {x:String => x})
     e.setOpt(elt.vcpu,        A_VM_CPU,       {x:Int => x.toString()})
     e.setOpt(elt.vmtype,      A_VM_TYPE,      {x:String => x})
+        logger.info("doing entry for vm %s".format(e))
     e
   }
 
@@ -614,6 +620,7 @@ class InventoryMapper(
 
   def entryFromProcess(elt:Process, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
     val e = dit.NODES.PROCESS.model(serverId,elt.pid.toString())
+
     e.setOpt(elt.commandName,   A_CMD_NAME,       {x:String => x})
     e.setOpt(elt.cpuUsage,      A_CPU_USAGE,      {x:Float => x.toString()})
     e.setOpt(elt.memory,        A_MEMORY_USAGE,   {x:Float => x.toString()})
@@ -621,6 +628,7 @@ class InventoryMapper(
     e.setOpt(elt.tty,           A_TTY,            {x:String => x})
     e.setOpt(elt.user,          A_PROC_USER,      {x:String => x})
     e.setOpt(elt.virtualMemory, A_VIRTUAL_MEMORY, {x:Int => x.toString()})
+
     e
   }
 
@@ -645,7 +653,9 @@ class InventoryMapper(
 
 
   def entryFromAgent(elt:Agent, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
+
     val e = dit.NODES.AGENT.model(serverId,elt.name)
+        logger.info("doing entry for agent %s".format(e))
     e.setOpt(elt.cfengineKey,          A_CFENGINE_KEY,    {x:PublicKey => x.key})
     e.setOpt(elt.owner,                A_AGENT_OWNER,     {x:String => x})
     e.setOpt(elt.policyServerHostname, A_SERVER_HOSTNAME, {x:String => x})
@@ -667,6 +677,38 @@ class InventoryMapper(
     }
   }
 
+   ///////////////////////// USERS /////////////////////////
+
+
+  def entryFromUser(elt:RegisteredUser, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
+    val e = dit.NODES.AGENT.model(serverId,elt.name)
+    e.setOpt(elt.uid,                A_UID,    {x:Int => x.toString()})
+    e.setOpt(elt.commandInterpreter, A_ON_LOGON,     {x:String => x})
+    e.setOpt(elt.expirationDate,     A_EXPIRATION_DATE, {x:DateTime => GeneralizedTime(x).toString})
+    e.setOpt(elt.homeDir,            A_HOME_DIR,    {x:String => x}) 
+    e.setOpt(elt.gid,                A_GID,    {x:Int => x.toString()})
+    e.setOpt(elt.password,           A_PASSWORDINFO,     {x:Password => Serialization.write(x)})
+    e.setOpt(elt.realm,              A_REALM, {x:String => x})
+    e.setOpt(elt.realname,           A_REALNAME,     {x:String => x})
+    e
+  }
+
+  def UserFromEntry(e:LDAPEntry) : Box[Agent] = {
+    for {
+      name <- e(A_AGENT_NAME) ?~! "Missing required attribute %s in entry: %s".format(A_AGENT_NAME, e)
+      cfengineKey          = e(A_CFENGINE_KEY)
+      owner                = e(A_AGENT_OWNER)
+      policyServerHostname = e(A_SERVER_HOSTNAME)
+      policyServerUUID     = e(A_SERVER_UUID)  
+    } yield {
+ 
+      Agent( name, policyServerHostname, policyServerUUID.map(new NodeId(_))
+          , cfengineKey.map(PublicKey(_)), owner)
+    }
+  }
+
+  //////////////////Node/ NodeInventory /////////////////////////
+  
   //////////////////Node/ NodeInventory /////////////////////////
   
     
@@ -746,9 +788,11 @@ class InventoryMapper(
     //now, add machine elements as children
     server.networks.foreach { x => tree.addChild(entryFromNetwork(x, dit, server.main.id)) }
     server.fileSystems.foreach { x => tree.addChild(entryFromFileSystem(x, dit, server.main.id)) }
-    server.vms.foreach { x => tree.addChild(entryFromVMInfo(x,dit,server.main.id))}
-    server.main.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id))}
-    server.processes.foreach { x => tree.addChild(entryFromProcess(x,dit,server.main.id))}
+    logger.info("vms to parse %s".format(server.vms))
+    server.vms.foreach { x => logger.info("vms to parse %s".format(x))
+        tree.addChild(entryFromVMInfo(x,dit,server.main.id)) }
+    server.main.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id)) }
+    server.processes.foreach { x => tree.addChild(entryFromProcess(x,dit,server.main.id)) }
     tree
   }
 

@@ -164,11 +164,11 @@ object LDAPConstants {
   val A_VM_ID = "virtualMachineUuid"
   val A_VM_TYPE = "vmType"
   val A_VM_SUBSYSTEM = "subsystem"
-  val A_VM_OWNER = "owner"
-  val A_VM_NAME = "name"
-  val A_VM_STATUS =  "status"
-  val A_VM_CPU = "cpuSpeed"
-  val A_VM_MEMORY = "memory"
+  val A_VM_OWNER = "vmOwner"
+  val A_VM_NAME = "vmName"
+  val A_VM_STATUS =  "vmStatus"
+  val A_VM_CPU = "vmCpu"
+  val A_VM_MEMORY = "vmMemory"
   //environnement Variable
   val A_EV = "environnementVariable"
   //Agent
@@ -178,7 +178,7 @@ object LDAPConstants {
   val A_SERVER_UUID = "serverUUID"
   val A_AGENT_NAME = "agentName"
   // Process
-  val A_PID = "ProcessID"
+  val A_PID = "processID"
   val A_CMD_NAME = "commandName"
   val A_CPU_USAGE = "cpuUsage"
   val A_MEMORY_USAGE = "memoryUsage"
@@ -186,6 +186,15 @@ object LDAPConstants {
   val A_TTY = "tty"
   val A_PROC_USER = "user"
   val A_VIRTUAL_MEMORY = "virtualMemory"
+  //User
+  val A_UID = "userID"
+  val A_ON_LOGON = "logOnAction"
+  val A_EXPIRATION_DATE = "expirationDate"
+  val A_HOME_DIR = "homeDirectory"
+  val A_GID = "groupID"
+  val A_PASSWORDINFO = "passwordInfo"
+  val A_REALM = "userRealm"
+  val A_REALNAME = "RealName" 
 
   val A_MEMBER = "member"
   val A_MEMBER_URL = "memberUrl"
@@ -224,7 +233,7 @@ object LDAPConstants {
   val OC_NET_IF = "networkInterfaceLogicalElement"
   val OC_VM_INFO = "virtualMachineLogicalElement"
   val OC_RUDDER_AGENT = "rudderAgentLogicalElement"
-  val OC_PROCESS = "proccesLogicalElement"
+  val OC_PROCESS = "processLogicalElement"
   val OC_MEMORY = "memoryPhysicalElement"
   val OC_STORAGE = "storagePhysicalElement"
   val OC_BIOS = "biosPhysicalElement"
@@ -326,8 +335,8 @@ object LDAPConstants {
    */
   OC +=(OC_NODE, sup = OC(OC_TOP), 
       must = Set(A_NODE_UUID, A_OS_NAME, A_OS_FULL_NAME, A_OS_VERSION, A_OS_KERNEL_VERSION),
-      may = Set(A_NAME,A_DESCRIPTION,A_PKEYS,A_AGENTS_NAME,A_HOSTED_VM_DN,
-          A_CONTAINER_DN,A_SOFTWARE_DN,A_ACCOUNT,A_EV,A_ROOT_USER,A_ARCH, A_LAST_LOGGED_USER, A_LAST_LOGGED_USER_TIME,
+      may = Set(A_NAME,A_DESCRIPTION,A_PKEYS,A_AGENTS_NAME,A_HOSTED_VM_DN, 
+          A_CONTAINER_DN,A_SOFTWARE_DN,A_ACCOUNT,A_EV ,A_ROOT_USER,A_ARCH, A_LAST_LOGGED_USER, A_LAST_LOGGED_USER_TIME,
           A_HOSTNAME,A_NODE_TECHNIQUES,A_OS_RAM,A_OS_SWAP, A_LIST_OF_IP, A_OS_SERVICE_PACK) )
   
   OC +=(OC_WINDOWS_NODE, sup = OC(OC_NODE),
@@ -336,7 +345,9 @@ object LDAPConstants {
   OC +=(OC_LE,
       must = Set(),
       may = Set(A_NAME,A_DESCRIPTION) )
-      
+    OC +=(OC_RUDDER_AGENT,
+      must = Set(A_AGENT_NAME),
+      may = Set(A_CFENGINE_KEY, A_AGENT_OWNER, A_SERVER_HOSTNAME ,A_SERVER_UUID ) )    
   OC +=(OC_FS,
       must = Set(A_MOUNT_POINT),
       may = Set(A_FILE_COUNT,
