@@ -48,7 +48,7 @@ import DefaultReportSaver._
 
 
 object DefaultReportSaver {
-  val logger = LoggerFactory.getLogger(classOf[LoggerFactory])
+  val logger = LoggerFactory.getLogger(classOf[DefaultReportSaver])
 }
 
 
@@ -101,14 +101,17 @@ class DefaultReportSaver(
     results = {
       for {
         con <- ldapConnectionProvider
+
         res <- con.saveTree(mapper.treeFromNode(report.node))
-      } yield { res }
+      } yield {          logger.info("in report saver doing a tree from node")
+        res }
     } :: results
     
     //finally, vms
     report.vms foreach { x => 
        results = { for {
-          con <- ldapConnectionProvider
+          con <- ldapConnectionProvider    
+          
           res <- con.saveTree(mapper.treeFromMachine(x))
         } yield { res }
       } :: results

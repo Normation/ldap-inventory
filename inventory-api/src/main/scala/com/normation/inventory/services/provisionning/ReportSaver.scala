@@ -98,8 +98,10 @@ trait PipelinedReportSaver[R] extends ReportSaver[R] {
        */
       postPreCommitReport <- pipeline(preCommitPipeline, report){ (preCommit, currentReport) =>
         try {
-                     logger.info("before precommit vms are %s precommit is %s".format(currentReport.node.vms,preCommit))
-          preCommit(currentReport) ?~! "Error in preCommit pipeline with processor '%s', abort".format(preCommit.name)
+                     logger.info("precommit to do is is %s".format(preCommit))
+         val precommit =  preCommit(currentReport) ?~! "Error in preCommit pipeline with processor '%s', abort".format(preCommit.name)
+                        logger.info("precommit done is is %s".format(preCommit))
+                        precommit
         } catch {
           case ex:Exception => Failure("Exception in preCommit pipeline with processor '%s', abort".format(preCommit.name), Full(ex), Empty)
         }

@@ -168,20 +168,18 @@ class FusionReportUnmarshaller(
         case "VIRTUALMACHINES" => processVms(elt).foreach { x => logger.info("vm is %s vms size is %s".format(x,report.node.vms.size))
           report = report.copy(node  = report.node.copy( vms = x +: report.node.vms) ) }
      // done previously :    case "VERSIONCLIENT" => report = report.copy( version = processVersion(elt))
-        case x => report 
-          /* 
+        case x => 
           contentParsingExtensions.find {
             pf => pf.isDefinedAt(e,report)
           }.foreach { pf =>
             report = pf(e,report)
-          }*/
+          }
       } }
-      case x => report
- /*       rootParsingExtensions.find {
+      case x =>       rootParsingExtensions.find {
           pf => pf.isDefinedAt(e,report)
         }.foreach { pf =>
           report = pf(e,report)
-        }*/
+        }
     } }
     
       logger.info("vms is %s".format(report.node.vms))

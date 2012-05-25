@@ -40,7 +40,7 @@ import com.normation.inventory.domain.InventoryReport
 import net.liftweb.common.{Box,Full,Empty,EmptyBox,Failure}
 import com.normation.inventory.domain._
 import com.normation.inventory.ldap.core.InventoryMapper
-
+import org.slf4j.LoggerFactory
 
 /**
  * Check OS Type. 
@@ -102,8 +102,10 @@ class LogReportPreCommit(
   mapper:InventoryMapper,
   ldifLogger:LDIFReportLogger
 ) extends PreCommit {
-  
+    val logger = LoggerFactory.getLogger(classOf[LogReportPreCommit])
   private[this] def reportToLdif( report:InventoryReport ) = {
+    
+        logger.info("log report pre commit tree from node")
     mapper.treeFromNode( report.node ).toLDIFRecords ++
     mapper.treeFromMachine( report.machine ).toLDIFRecords ++
     report.vms.flatMap( vm => mapper.treeFromMachine( vm ).toLDIFRecords ) ++
@@ -113,11 +115,13 @@ class LogReportPreCommit(
   override val name = "pre_commit_inventory:log_inventory"
   
   override def apply(report:InventoryReport) : Box[InventoryReport] = {
+    logger.info("apply precommit")
     ldifLogger.log(
         report.name,
         Some("LDIF describing the state of inventory to reach after save. What will be actually saved may be modified by pre/post processing"),
         Some("REPORT"),
         reportToLdif(report))
+            logger.info("applied precommit")
     Full(report)
   }
   

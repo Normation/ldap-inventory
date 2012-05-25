@@ -201,9 +201,12 @@ object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable
   override def isDefinedAt(x:(Node,InventoryReport)) = { x._1.label == "AGENTSNAME" }
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
     x._2.copy( node = x._2.node.copy( main = x._2.node.main.copy
-        (agents = x._2.node.main.agents.first.copy(name = processAgentName(x._1).toString()) +: x._2.node.main.agents.tail
-            ) )
-    )
+        (agents = x._2.node.main.agents.firstOption match  {
+          case None => Agent(name = x._1.toString()) +: x._2.node.main.agents 
+          case Some(agent) => agent.copy(name = x._1.toString()) +: x._2.node.main.agents 
+        }
+        ) ) ) 
+        
   }  
   def processAgentName(xml:NodeSeq) : Seq[AgentType] = {
     (xml \ "AGENTNAME").flatMap(e => optText(e).flatMap( a => 

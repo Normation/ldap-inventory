@@ -67,7 +67,7 @@ trait LDIFReportLogger {
 
 object DefaultLDIFReportLogger {
   import org.slf4j.LoggerFactory
-  val logger = LoggerFactory.getLogger(classOf[DefaultLDIFReportLogger])
+  val logger = LoggerFactory.getLogger("trace.ldifreport.in.file")
   val defaultLogDir = System.getProperty("java.io.tmpdir") + 
     System.getProperty("file.separator") + "LDIFLogReport"
 }
@@ -105,17 +105,19 @@ class DefaultLDIFReportLogger(val LDIFLogDir:String = DefaultLDIFReportLogger.de
       try {
         logger.debug("LDIF log for report processing: " + LDIFFile.getAbsolutePath)
         writer = new LDIFWriter(LDIFFile)
-        
-        
-        if(LDIFRecords.nonEmpty) { //don't check it if logger trace is not enabled
-          writer.writeLDIFRecord(LDIFRecords.head, comments.getOrElse(null))
-          LDIFRecords.tail.foreach { LDIFRecord => writer.writeLDIFRecord(LDIFRecord) }
-        } else {
-          //write a dummy recored
-          val c = comments.getOrElse("") + "(There was no record to log, a dummy modification is added in log as a placeholder)"
-          writer.writeLDIFRecord(new LDIFModifyChangeRecord("cn=dummy", new Modification(REPLACE,"dummy", "dummy")), c)          
+  
+        if (logger.isTraceEnabled()){
+          val ldif = LDIFRecords
+          if(ldif.nonEmpty) {      //don't check it if logger trace is not enabled
+            writer.writeLDIFRecord(ldif.head, comments.getOrElse(null))
+
+            ldif.tail.foreach { LDIFRecord => writer.writeLDIFRecord(LDIFRecord) }
+          } else {
+            //write a dummy record
+            val c = comments.getOrElse("") + "(There was no record to log, a dummy modification is added in log as a placeholder)"
+                writer.writeLDIFRecord(new LDIFModifyChangeRecord("cn=dummy", new Modification(REPLACE,"dummy", "dummy")), c)          
+          }
         }
-        
         
       } catch {
         case e:Exception => logger.error("Exception when loggin (ignored) %s".format(e.getMessage()),e)

@@ -95,7 +95,7 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
   private[this] def checkId(report:InventoryReport): Box[InventoryReport] = {
     val tag = "UUID"
     for {
-      tagHere <- checkNodeSeq(report.sourceReport\\("RUDDER"), tag, true) ?~! "Missing node ID attribute '%s' in report. This attribute is mandatory and must contains node ID.".format(tag)
+      tagHere <- checkNodeSeq(report.sourceReport, tag, true) or  checkNodeSeq(report.sourceReport\\("RUDDER"), tag, true) ?~! "Missing node ID attribute '%s' in report. This attribute is mandatory and must contains node ID.".format(tag)
       idHere <- if(report.node.main.id.value == tagHere) Full("OK") 
                 else Failure("Node ID is not correctly set (but tag '%s' is present with value '%s' and id is %s)".format(tag, tagHere,report.node.main.id.value))
     } yield {

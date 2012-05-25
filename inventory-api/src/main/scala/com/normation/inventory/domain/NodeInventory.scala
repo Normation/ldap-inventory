@@ -123,10 +123,10 @@ case class RegisteredUser (
 
 case class Agent (
     name                 : String
-	, policyServerHostname : Option[String]
-	, policyServerUUID     : Option[NodeId]
-	, cfengineKey          : Option[PublicKey]
-	, owner                : Option[String]
+	, policyServerHostname : Option[String] = None
+	, policyServerUUID     : Option[NodeId] = None
+	, cfengineKey          : Option[PublicKey] = None
+	, owner                : Option[String] = None
 )
 
 case class EnvironmentVariable (

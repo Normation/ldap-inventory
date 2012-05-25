@@ -595,7 +595,6 @@ class InventoryMapper(
     e.setOpt(elt.subsystem,   A_VM_SUBSYSTEM, {x:String => x})
     e.setOpt(elt.vcpu,        A_VM_CPU,       {x:Int => x.toString()})
     e.setOpt(elt.vmtype,      A_VM_TYPE,      {x:String => x})
-        logger.info("doing entry for vm %s".format(e))
     e
   }
 
@@ -655,7 +654,6 @@ class InventoryMapper(
   def entryFromAgent(elt:Agent, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
 
     val e = dit.NODES.AGENT.model(serverId,elt.name)
-        logger.info("doing entry for agent %s".format(e))
     e.setOpt(elt.cfengineKey,          A_CFENGINE_KEY,    {x:PublicKey => x.key})
     e.setOpt(elt.owner,                A_AGENT_OWNER,     {x:String => x})
     e.setOpt(elt.policyServerHostname, A_SERVER_HOSTNAME, {x:String => x})
@@ -717,7 +715,8 @@ class InventoryMapper(
   // {KEY}VALUE
   private[this] val userDefinedPropertyRegex = """\{([^\}]+)\}(.+)""".r
   
-  def treeFromNode(server:NodeInventory) : LDAPTree = {
+  def treeFromNode(server:NodeInventory) : LDAPTree = {    
+    logger.info("call tree from node")
     val dit = ditService.getDit(server.main.status)
     //the root entry of the tree: the machine inventory
     val root = server.main.osDetails match {
@@ -757,40 +756,29 @@ class InventoryMapper(
     root +=! (A_OS_FULL_NAME, server.main.osDetails.fullName)
     root +=! (A_OS_VERSION, server.main.osDetails.version.value)
     root.setOpt(server.main.osDetails.servicePack, A_OS_SERVICE_PACK, { x:String => x })
-    root +=! (A_OS_KERNEL_VERSION, server.main.osDetails.kernelVersion.value)
-      
+    root +=! (A_OS_KERNEL_VERSION, server.main.osDetails.kernelVersion.value)    
     root +=! (A_ROOT_USER, server.main.rootUser)
     root +=! (A_HOSTNAME, server.main.hostname)
-    //root +=! (A_POLICY_SERVER_UUID, server.main.policyServerId.value)
     root.setOpt(server.ram, A_OS_RAM, { m: MemorySize => m.size.toString })
     root.setOpt(server.swap, A_OS_SWAP, { m: MemorySize => m.size.toString })
     root.setOpt(server.archDescription, A_ARCH, { x: String => x })
     root.setOpt(server.lastLoggedUser, A_LAST_LOGGED_USER, { x: String => x })
     root.setOpt(server.lastLoggedUserTime, A_LAST_LOGGED_USER_TIME, { x: DateTime => GeneralizedTime(x).toString })
     root.setOpt(server.inventoryDate, A_INVENTORY_DATE, { x: DateTime => GeneralizedTime(x).toString })
-   // root +=! (A_AGENTS_NAME, server.agentNames.map(x => x.toString):_*) 
-    //root +=! (A_PKEYS, server.publicKeys.map(x => x.key):_*) 
-    root +=! (A_SOFTWARE_DN, server.softwareIds.map(x => dit.SOFTWARE.SOFT.dn(x).toString):_*)
-    
+    root +=! (A_SOFTWARE_DN, server.softwareIds.map(x => dit.SOFTWARE.SOFT.dn(x).toString):_*)    
     root +=! (A_EV, server.environmentVariables.map(x => Serialization.write(x)):_*)
     //we don't know their dit...
     root +=! (A_CONTAINER_DN, server.machineId.map { case (id, status) => 
       ditService.getDit(status).MACHINES.MACHINE.dn(id).toString
     }.toSeq:_*)
-/*    root +=! (A_HOSTED_VM_DN, server.vms.map {
-      ditService.getDit(_.status).MACHINES.MACHINE.dn(_.uuid).toString
-    }:_*)
-  */  
- //   root +=! (A_ACCOUNT, server.accounts:_*)
-  //  root +=! (A_NODE_TECHNIQUES, server.techniques:_*)
-   // root +=! (A_LIST_OF_IP, server.serverIps:_*)
+
     val tree = LDAPTree(root)
-    //now, add machine elements as children
+    //now, add machine elements as children  
+    logger.info("first")
     server.networks.foreach { x => tree.addChild(entryFromNetwork(x, dit, server.main.id)) }
     server.fileSystems.foreach { x => tree.addChild(entryFromFileSystem(x, dit, server.main.id)) }
-    logger.info("vms to parse %s".format(server.vms))
-    server.vms.foreach { x => logger.info("vms to parse %s".format(x))
-        tree.addChild(entryFromVMInfo(x,dit,server.main.id)) }
+    logger.info("second".format(server.vms))
+    server.vms.foreach { x => tree.addChild(entryFromVMInfo(x,dit,server.main.id)) }
     server.main.agents.foreach { x => tree.addChild(entryFromAgent(x,dit,server.main.id)) }
     server.processes.foreach { x => tree.addChild(entryFromProcess(x,dit,server.main.id)) }
     tree
