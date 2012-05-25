@@ -59,10 +59,10 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
     val checks = 
       checkId _ ::
       checkHostname _ ::
-      checkRoot _ ::
-      checkPolicyServer _ ::
+    //  checkRoot _ ::
+    //  checkPolicyServer _ ::
       checkOS _ ::
-      checkAgent _ ::
+   //   checkAgent _ ::
       Nil
       
     pipeline(checks, report) { (check,currentReport) =>
@@ -95,9 +95,9 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
   private[this] def checkId(report:InventoryReport): Box[InventoryReport] = {
     val tag = "UUID"
     for {
-      tagHere <- checkNodeSeq(report.sourceReport, tag, true) ?~! "Missing node ID attribute '%s' in report. This attribute is mandatory and must contains node ID.".format(tag)
+      tagHere <- checkNodeSeq(report.sourceReport\\("RUDDER"), tag, true) ?~! "Missing node ID attribute '%s' in report. This attribute is mandatory and must contains node ID.".format(tag)
       idHere <- if(report.node.main.id.value == tagHere) Full("OK") 
-                else Failure("Node ID is not correctly set (but tag '%s' is present with value '%s'".format(tag, tagHere))
+                else Failure("Node ID is not correctly set (but tag '%s' is present with value '%s' and id is %s)".format(tag, tagHere,report.node.main.id.value))
     } yield {
       report
     }
@@ -114,7 +114,7 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
     }
   }
   
-  private[this] def checkRoot(report:InventoryReport): Box[InventoryReport] = {
+ /* private[this] def checkRoot(report:InventoryReport): Box[InventoryReport] = {
     val tag = "USER"
     for {
       tagHere <- checkNodeSeq(report.sourceReport, tag, true) ?~! "Missing administrator attribute '%s' in report. This attribute is mandatory and must contains node local administrator login.".format(tag)
@@ -123,7 +123,7 @@ class PostUnmarshallCheckConsistency extends PostUnmarshall {
     } yield {
       report
     }
-  }  
+  }  */
     
   private[this] def checkPolicyServer(report:InventoryReport): Box[InventoryReport] = {
     val tag = "POLICY_SERVER"

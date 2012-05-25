@@ -75,7 +75,7 @@ class ComparePublicKeyIdFinder(
 ) extends NodeInventoryDNFinder with Loggable {
   
   override def tryWith(entity:NodeInventory) : Box[(NodeId,InventoryStatus)] = {
-    val keys = entity.publicKeys
+    val keys:Sequence[PublicKey] = (entity.main.agents :\ Seq[PublicKey]()) {(agent,acc) =>  agent.cfengineKey.get +: acc  }
     if(keys.size > 0) {
       val keysFilter = OR((keys.map( k => EQ(A_PKEYS,k.key))):_*)
 

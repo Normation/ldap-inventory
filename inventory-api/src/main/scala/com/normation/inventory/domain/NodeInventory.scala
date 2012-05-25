@@ -114,7 +114,7 @@ case class RegisteredUser (
   , gid                : Option[Int]      = None
   , realname           : Option[String]   = None
   , expirationDate     : Option[DateTime] = None
-  , passord            : Option[Password] = None
+  , password            : Option[Password] = None
   , homeDir            : Option[String]   = None
   , commandInterpreter : Option[String]   = None
   , realm              : Option[String]   = None

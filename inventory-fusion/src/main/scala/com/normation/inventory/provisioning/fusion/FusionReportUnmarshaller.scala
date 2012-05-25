@@ -117,7 +117,7 @@ class FusionReportUnmarshaller(
       //idems for VMs and applications
       val vms = List[MachineInventory]()
       val applications =  List[Software]()
-      val version=  None;
+      val version= processVersion(doc\\("Request")\("VERSIONCLIENT"));
      InventoryReport(
         reportName,
         deviceId, 
@@ -129,11 +129,10 @@ class FusionReportUnmarshaller(
         doc
       )
     }
-     /*
-      * 
-      * TODO : Here fiend fusion agent version 
-      */
      
+
+    
+                 logger.info("node uuid is %s".format(report.node.main.id.value))
     /*
      * and now, actually parse !
      * Each line is a partial function of the form: Node => Unit
@@ -155,7 +154,10 @@ class FusionReportUnmarshaller(
         case "PORTS" => processPort(elt).foreach { x => report = report.copy( machine = report.machine.copy( ports = x +: report.machine.ports ) ) }
         case "PROCESSES" => processProcesses(elt).foreach { x => report = report.copy( node = report.node.copy ( processes = x +: report.node.processes))}
         case "REGISTEREDUSERS" => processRegisteredUsers(elt).foreach {x => report = report.copy( node = report.node.copy ( registeredUsers = x  +: report.node.registeredUsers) ) }
-        case "RUDDER" => report.copy( node = report.node.copy ( main = processRudder(elt,report.node.main) ) )
+        case "RUDDER" =>  val sum2 = processRudder(elt,report.node.main)
+                    logger.info("sum2 uuid is %s".format(sum2.id.value))
+                    report = report.copy( node = report.node.copy( main = sum2))
+        
         case "SLOTS" => processSlot(elt).foreach { x => report = report.copy( machine = report.machine.copy( slots = x +: report.machine.slots ) ) }
         case "SOFTWARES" => report = report.copy( applications  = processSoftware(elt) +: report.applications )
         case "SOUNDS" => processSound(elt).foreach { x => report = report.copy( machine = report.machine.copy( sounds = x +: report.machine.sounds ) ) }
@@ -163,24 +165,26 @@ class FusionReportUnmarshaller(
         case "USBDEVICES" => //TODO only digits for them, not sure we want to keep that as it is. 
         case "USERS" => //TODO Not sure what is it (only one login ? a logged user ?)
         case "VIDEOS" => processVideo(elt).foreach { x => report = report.copy( machine = report.machine.copy( videos = x +: report.machine.videos ) ) }
-        case "VIRTUALMACHINES" => processVms(elt).foreach { x => report = report.copy(node  = report.node.copy( vms = x +: report.node.vms) ) }
-        case "VERSIONCLIENT" => report = report.copy( version = processVersion(elt))
-        case x => 
+        case "VIRTUALMACHINES" => processVms(elt).foreach { x => logger.info("vm is %s vms size is %s".format(x,report.node.vms.size))
+          report = report.copy(node  = report.node.copy( vms = x +: report.node.vms) ) }
+     // done previously :    case "VERSIONCLIENT" => report = report.copy( version = processVersion(elt))
+        case x => report 
+          /* 
           contentParsingExtensions.find {
             pf => pf.isDefinedAt(e,report)
           }.foreach { pf =>
             report = pf(e,report)
-          }
+          }*/
       } }
-      case x => 
-        rootParsingExtensions.find {
+      case x => report
+ /*       rootParsingExtensions.find {
           pf => pf.isDefinedAt(e,report)
         }.foreach { pf =>
           report = pf(e,report)
-        }
+        }*/
     } }
     
-    
+      logger.info("vms is %s".format(report.node.vms))
     val fullReport = report.copy(
        //add all VMs and software ids to node
       node = report.node.copy( 
@@ -703,7 +707,8 @@ class FusionReportUnmarshaller(
 	    logger.debug("Ignoring entry VirtualMachine because tag UUID is empty")
 	    logger.debug(vm)
 	    None
-	  case Some(uuid) => Some(
+	  case Some(uuid) => logger.warn("vm uuid is %s".format(uuid))
+	      Some(
 	      VirtualMachine (
 	            vmtype    = optText(vm\"VMTYPE")
 	          , subsystem = optText(vm\"SUBSYSTEM")
@@ -730,7 +735,12 @@ class FusionReportUnmarshaller(
 	          , cpuUsage      = optText(proc\"CPUUSAGE").map(_.toFloat)
 	          , memory        = optText(proc\"MEMORY").map(_.toFloat)
 	          , commandName           = optText(proc\"CMD")
-	          , started       = optText(proc\"STARTED").map(DateTime.parse)
+	          , started       = try {
+	                             optText(proc\"STARTED").map(DateTime.parse)
+	                            } catch {
+	                            case e : IllegalArgumentException => logger.warn("error when parsing PROCESS -> STARTED")
+	                                None  
+	                            } 
 	          , tty           = optText(proc\"TTY")
 	          , user          = optText(proc\"USER")
 	          , virtualMemory = optText(proc\"VIRTUALMEMORY").map(_.toInt)
@@ -738,16 +748,17 @@ class FusionReportUnmarshaller(
 	  }
   }
 
-  def processAgent (ag : NodeSeq): Seq[Agent] = {
+  def processAgent (agent : NodeSeq): Seq[Agent] = {
     val keynorm: PrintedKeyNormalizer = new PrintedKeyNormalizer
     val agents:Seq[Agent] = Seq()
-    ag.foreach { agent =>
-      optText(agent\"NAME") match {
+   logger.info("agent size is %s".format( agent.head))
+    (agents/:agent){(acc,agent) =>
+    optText(agent\"AGENT_NAME") match {
       case None =>
         logger.debug("Ignoring entry Agent because tag NAME is empty")
         logger.debug(agent)
         agents
-      case Some(name) =>
+      case Some(name) =>   logger.info("treat agent are %s".format(name))
         Agent (
               name = name
             , policyServerHostname = optText(agent\"POLICY_SERVER_HOSTNAME")
@@ -755,9 +766,8 @@ class FusionReportUnmarshaller(
             , cfengineKey          = optText(agent\"CFENGINE_KEY").map(key => new PublicKey(keynorm(key)))
             , owner                = optText(agent\"OWNER")
             ) +: agents
-      }
     }
-    agents
+    }
   }
 
   def processRudder(rud : NodeSeq, sum:NodeSummary) : NodeSummary = {
@@ -766,12 +776,18 @@ class FusionReportUnmarshaller(
 			logger.debug("Ignoring entry Rudder because tag UUID is empty")
 			logger.debug(rud)
 			sum
-		case Some(uuid) =>
-			sum.copy (
+		case Some(uuid) => 
+			logger.info("uuid is %s".format(uuid))			
+			val sum2 = NodeSummary (
 			      hostname = optText(rud\"HOSTNAME").get
 	 		    , id = new NodeId(uuid)
-	 		    ,	agents = processAgent(rud\"AGENT")
+	 		    ,	agents = processAgent(rud\\"AGENT")
+	 		    , rootUser = sum.rootUser
+	 		    , osDetails = sum.osDetails
+	 		    , status = sum.status
 			    )
+			    logger.info("sum 2 agents are %s".format(sum2.agents.foreach(ag => ag.name)))
+			    sum2
 	  }
   }
 
@@ -808,7 +824,7 @@ class FusionReportUnmarshaller(
               , gid  = optText(reguser\"UID").map(_.toInt)
               , realname =  optText(reguser\"UID")
               , expirationDate = optText(reguser\"EXPIRATION_DATE").map(DateTime.parse)
-              , passord = processPassword(reguser\"PASSWORD")
+              , password = processPassword(reguser\"PASSWORD")
               , homeDir = optText(reguser\"HOMEDIR")
               , commandInterpreter = optText(reguser\"COMMAND_INTERPRETER")
               , realm = optText(reguser\"STARTED")
@@ -821,7 +837,12 @@ class FusionReportUnmarshaller(
   def processAccessLog (accessLog : NodeSeq) : Option[DateTime] = {
 	 optText(accessLog\"LOGDATE") match {
 	   case None => None;
-	   case Some(date) => Some(DateTime.parse(date))
+	   case Some(date) => try {
+	       Some(DateTime.parse(date))
+	     } catch {
+	       case e:IllegalArgumentException => logger.warn("error when parsing ACCESSLOG, reason %s".format(e.getMessage()))
+	           None  
+	     } 
 	 }
   }
 
