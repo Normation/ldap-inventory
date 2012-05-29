@@ -140,7 +140,7 @@ object RudderCpuParsing extends FusionReportParsingExtension with Loggable {
   def processProcessors(xml:NodeSeq) : Seq[Processor] = {
     val buf = scala.collection.mutable.Buffer[Processor]()
     (xml \ "PROCESSOR").zipWithIndex.map { case (p,i) =>
-      optText(p\"NAME").map { x => x + " num " + i} match {
+      optText(p\"NAME").map { x => x } match {
         case None =>
           logger.debug("Ignoring Processor entry because NAME tag is empty")
           logger.debug(p)
@@ -200,10 +200,11 @@ object RudderRootUserParsing extends FusionReportParsingExtension {
 object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable {
   override def isDefinedAt(x:(Node,InventoryReport)) = { x._1.label == "AGENTSNAME" }
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
+    val agentname = optText((x._1\ "AGENTNAME").first).get
     x._2.copy( node = x._2.node.copy( main = x._2.node.main.copy
         (agents = x._2.node.main.agents.firstOption match  {
-          case None => Agent(name = x._1.toString()) +: x._2.node.main.agents 
-          case Some(agent) => agent.copy(name = x._1.toString()) +: x._2.node.main.agents 
+          case None => Agent(name = agentname) +: x._2.node.main.agents 
+          case Some(agent) => agent.copy(name = agentname) +: x._2.node.main.agents 
         }
         ) ) ) 
         
