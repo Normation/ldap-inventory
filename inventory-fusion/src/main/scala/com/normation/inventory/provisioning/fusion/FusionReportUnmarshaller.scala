@@ -678,8 +678,8 @@ class FusionReportUnmarshaller(
                 , cpuid         = optText(c\"ID")
                 , stepping      = optText(c\"STEPPING").map(_.toInt)
                 , model         = optText(c\"MODEL").map(_.toInt)
-                , family        = optText(c\"FAMILY"\"NUMBER").map(_.toInt)
-                , familyName    = optText(c\"FAMILY"\"NAME")
+                , family        = optText(c\"FAMILYNUMBER").map(_.toInt)
+                , familyName    = optText(c\"FAMILYNAME")
                 ) )
     }
   }
