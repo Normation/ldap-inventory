@@ -165,9 +165,10 @@ case object UnknownWindowsType extends WindowsType                { val name = "
 case object WindowsXP    extends WindowsType with HashcodeCaching { val name = "WindowsXP" }
 case object WindowsVista extends WindowsType with HashcodeCaching { val name = "WindowsVista" }
 case object WindowsSeven extends WindowsType with HashcodeCaching { val name = "WindowsSeven" }
-case object Windows2000  extends WindowsType with HashcodeCaching { val name = "Windows2000" }
-case object Windows2003  extends WindowsType with HashcodeCaching { val name = "Windows2003" }
-case object Windows2008  extends WindowsType with HashcodeCaching { val name = "Windows2008" }
+case object Windows2000 extends WindowsType with HashcodeCaching  { val name = "Windows2000" }
+case object Windows2003 extends WindowsType with HashcodeCaching  { val name = "Windows2003" }
+case object Windows2008 extends WindowsType with HashcodeCaching  { val name = "Windows2008" }
+case object Windows2008R2 extends WindowsType with HashcodeCaching  { val name = "Windows2008R2" }
 
 
 /**
