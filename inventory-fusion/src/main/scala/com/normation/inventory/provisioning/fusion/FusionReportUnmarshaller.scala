@@ -731,7 +731,7 @@ class FusionReportUnmarshaller(
 	      Process(
 	            pid   = pid.toInt
 	          , cpuUsage      = optText(proc\"CPUUSAGE").map(_.toFloat)
-	          , memory        = optText(proc\"MEMORY").map(_.toFloat)
+	          , memory        = optText(proc\"MEM").map(_.toFloat)
 	          , commandName           = optText(proc\"CMD")
 	          , started       = try {
 	                             optText(proc\"STARTED").map(DateTime.parse)

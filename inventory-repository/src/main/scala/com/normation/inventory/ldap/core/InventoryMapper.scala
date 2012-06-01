@@ -947,13 +947,3 @@ class InventoryMapper(
   
 }
 
-object Test{
-def main(args: Array[String])
- {
-  val ev = EnvironmentVariable(name = "PATH",value =Some("/usr/bin"))
-  implicit val formats = Serialization.formats(NoTypeHints)
-  val json = Serialization.write[EnvironmentVariable](ev)
-  println(json)
-  println(Serialization.read[EnvironmentVariable](json))
-}
-}
