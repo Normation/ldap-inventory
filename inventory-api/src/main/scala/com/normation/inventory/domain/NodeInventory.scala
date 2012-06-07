@@ -42,6 +42,7 @@ import com.normation.inventory.domain._
 import com.normation.utils.HashcodeCaching
 import org.joda.time.DateTime
 import org.joda.time.DateTime
+import net.liftweb.common.Box
 
 sealed trait NodeElement {
   def description : Option[String]
@@ -122,7 +123,7 @@ case class RegisteredUser (
 ) extends NodeElement with HashcodeCaching
 
 case class Agent (
-    name                 : String
+    name                   : AgentType
 	, policyServerHostname : Option[String] = None
 	, policyServerUUID     : Option[NodeId] = None
 	, cfengineKey          : Option[PublicKey] = None

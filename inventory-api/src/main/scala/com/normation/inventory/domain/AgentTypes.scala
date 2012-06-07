@@ -58,6 +58,12 @@ final case object COMMUNITY_AGENT extends AgentType with HashcodeCaching {
   override def toRulesPath() = "/cfengine-community"
 }
 
+case class AgentTypedefault (
+  name:String
+) extends AgentType {
+  override def toString() = name
+  override def toRulesPath() = "/%s".format(name)
+} 
 object AgentType {
   def allValues = NOVA_AGENT :: COMMUNITY_AGENT :: Nil
   
@@ -65,7 +71,7 @@ object AgentType {
     string match {
       case A_NOVA_AGENT => Full(NOVA_AGENT)
       case A_COMMUNITY_AGENT => Full(COMMUNITY_AGENT)
-      case _ => Failure("Wrong type of value for the agent %s".format(string)) 
+      case _ => Full(AgentTypedefault(string)) 
     }
   }
 }
