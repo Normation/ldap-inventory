@@ -39,6 +39,7 @@ import com.normation.inventory.domain._
 import net.liftweb.common._
 import java.security.MessageDigest
 import com.normation.utils.UuidRegex
+import org.slf4j.Logger
 
 ///////////// <CONTENT> ///////////// 
 
@@ -105,11 +106,11 @@ object RudderPolicyServerParsing extends FusionReportParsingExtension {
  * If <MACHINEID> is not present or its content is not a valid UUID, 
  * define the machine ID based on the md5 of node ID. 
  */
-object RudderMachineIdParsing extends FusionReportParsingExtension {
+object RudderMachineIdParsing extends FusionReportParsingExtension with Loggable {
   private[this] def buildMachineId(report:InventoryReport) = {
     val md5 = MessageDigest.getInstance("MD5").digest(report.node.main.id.value.getBytes)
     val id = (md5.map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}).toLowerCase
-    
+ 	logger.error("build machine id is used")
     "%s-%s-%s-%s-%s".format(
         id.substring(0,8)
       , id.substring(8,12)
@@ -203,8 +204,8 @@ object RudderAgentNameParsing extends FusionReportParsingExtension with Loggable
     val agentname = optText((x._1\ "AGENTNAME").first).get
     x._2.copy( node = x._2.node.copy( main = x._2.node.main.copy
         (agents = x._2.node.main.agents.firstOption match  {
-          case None => Agent(name = agentname) +: x._2.node.main.agents 
-          case Some(agent) => agent.copy(name = agentname) +: x._2.node.main.agents 
+          case None => Agent(name = AgentType.fromValue(agentname).get) +: x._2.node.main.agents 
+          case Some(agent) => agent.copy(name = AgentType.fromValue(agentname).get) +: x._2.node.main.agents 
         }
         ) ) ) 
         

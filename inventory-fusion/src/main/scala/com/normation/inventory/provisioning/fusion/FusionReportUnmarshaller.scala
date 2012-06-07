@@ -50,6 +50,7 @@ import net.liftweb.common._
 import com.normation.inventory.domain.InventoryConstants._
 import com.normation.inventory.services.provisioning._
 
+
 class FusionReportUnmarshaller(
     uuidGen:StringUuidGenerator,
     rootParsingExtensions:List[FusionReportParsingExtension] = Nil,
@@ -146,7 +147,8 @@ class FusionReportUnmarshaller(
         case "CPUS" => processCpu(elt).foreach { x => report = report.copy( machine = report.machine.copy( processors = x +: report.machine.processors ) ) }
         case "DRIVES" => processFileSystem(elt).foreach { x => report = report.copy( node = report.node.copy( fileSystems = x +: report.node.fileSystems ) ) }
         case "ENVS" => processEnvironmentVariable(elt).foreach {x => report = report.copy(node = report.node.copy (environmentVariables = x +: report.node.environmentVariables ) ) }
-        case "HARDWARE" => report = processHardware(elt, report)
+        case "HARDWARE" =>  processHardware(elt, report).foreach(x => report = report.copy(node = x._1, machine = x._2))
+        		logger.error("machine id is %s after processing hardware".format(report.machine.id))
         case "OPERATINGSYSTEM" => report = processOsDetails(elt, report, e)
         case "INPUTS" => //TODO keyborad, mouse, speakers
         case "MEMORIES" => processMemory(elt).foreach { x => report = report.copy( machine = report.machine.copy( memories = x +: report.machine.memories ) ) }
@@ -218,7 +220,7 @@ class FusionReportUnmarshaller(
   // parsing implementation details for each tags //
   // ******************************************** //
 
-  def processHardware(xml:NodeSeq, report:InventoryReport) : InventoryReport = {
+  def processHardware(xml:NodeSeq, report:InventoryReport) : Option[(NodeInventory,MachineInventory)] = {
       /*
        * 
        * *** Operating System infos ***
@@ -288,18 +290,18 @@ class FusionReportUnmarshaller(
        */
 
     
-    
+     val machinewithUUID = report.machine.copy(id = (MachineUuid(optText(xml\\"UUID").get)))
     //update machine VM type
     val newMachine = optText(xml\\"VMSYSTEM") match {
-      case None => report.machine
+      case None => machinewithUUID
       case Some(x) => x.toLowerCase match {
-        case "physical" => report.machine.copy(machineType = PhysicalMachineType)
-        case "xen" => report.machine.copy(machineType = VirtualMachineType(Xen) )
-        case "virtualbox" => report.machine.copy(machineType = VirtualMachineType(VirtualBox) )
-        case "virtual machine" => report.machine.copy(machineType = VirtualMachineType(UnknownVmType) )
-        case "vmware" => report.machine.copy(machineType = VirtualMachineType(VMWare) )
-        case "qemu" => report.machine.copy(machineType = VirtualMachineType(QEmu) )
-        case "solariszone" => report.machine.copy(machineType = VirtualMachineType(SolarisZone) )
+        case "physical" => machinewithUUID.copy(machineType = PhysicalMachineType)
+        case "xen" => machinewithUUID.copy(machineType = VirtualMachineType(Xen) )
+        case "virtualbox" => machinewithUUID.copy(machineType = VirtualMachineType(VirtualBox) )
+        case "virtual machine" => machinewithUUID.copy(machineType = VirtualMachineType(UnknownVmType) )
+        case "vmware" => machinewithUUID.copy(machineType = VirtualMachineType(VMWare) )
+        case "qemu" => machinewithUUID.copy(machineType = VirtualMachineType(QEmu) )
+        case "solariszone" => machinewithUUID.copy(machineType = VirtualMachineType(SolarisZone) )
       }
     }
         
@@ -320,8 +322,8 @@ class FusionReportUnmarshaller(
             None
         }
     )
-    
-    report.copy( node = newNode, machine = newMachine )
+    logger.info("machine uuid is %s".format(newNode.machineId))
+    Some((newNode, newMachine))
   }
 
   def processOsDetails(xml:NodeSeq, report:InventoryReport, contentNode:NodeSeq) : InventoryReport = {
@@ -768,7 +770,7 @@ class FusionReportUnmarshaller(
         agents
       case Some(name) =>   logger.info("treat agent are %s".format(name))
         Agent (
-              name = name
+              name = AgentType.fromValue(name).get
             , policyServerHostname = optText(agent\"POLICY_SERVER_HOSTNAME")
             , policyServerUUID     = optText(agent\"POLICY_SERVER_UUID").map(new NodeId(_))
             , cfengineKey          = optText(agent\"CFENGINE_KEY").map(key => new PublicKey(keynorm(key)))
