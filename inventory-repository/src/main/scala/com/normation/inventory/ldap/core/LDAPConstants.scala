@@ -54,6 +54,7 @@ object LDAPConstants {
   val A_ROOT_USER = "localAdministratorAccountName"
   val A_DEF = "definition"
   val A_PKEYS = "publicKey"
+    val A_AGENT = "rudderAgent"
   val A_AGENTS_NAME = "agentName"	
   val A_DESCRIPTION = "description"
   val A_MODEL = "model" 

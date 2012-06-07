@@ -60,6 +60,7 @@ import com.normation.inventory.domain.Password
 import net.liftweb.json.Serializer
 import net.liftweb.json.Serializer
 import net.liftweb.json.Serialization
+import com.normation.inventory.domain.AgentType
 
 
 
@@ -408,7 +409,7 @@ class InventoryMapper(
     //the root entry of the tree: the machine inventory
     val dit = ditService.getDit(machine.status)
     val root = dit.MACHINES.MACHINE.model(machine.id)
-    
+    logger.error("machine id is : %s".format(machine.id))
     root.setOpt(machine.mbUuid, A_MB_UUID, {x:MotherBoardUuid => x.value})
     root += (A_OC, machineType2ObjectClass(machine.machineType).name)
     root.setOpt(machine.inventoryDate,A_INVENTORY_DATE,{x:DateTime => GeneralizedTime(x).toString})
@@ -653,7 +654,7 @@ class InventoryMapper(
 
   def entryFromAgent(elt:Agent, dit:InventoryDit, serverId:NodeId) : LDAPEntry = {
 
-    val e = dit.NODES.AGENT.model(serverId,elt.name)
+    val e = dit.NODES.AGENT.model(serverId,elt.name.toString())
     e.setOpt(elt.cfengineKey,          A_CFENGINE_KEY,    {x:PublicKey => x.key})
     e.setOpt(elt.owner,                A_AGENT_OWNER,     {x:String => x})
     e.setOpt(elt.policyServerHostname, A_SERVER_HOSTNAME, {x:String => x})
@@ -670,7 +671,7 @@ class InventoryMapper(
       policyServerUUID     = e(A_SERVER_UUID)  
     } yield {
  
-      Agent( name, policyServerHostname, policyServerUUID.map(new NodeId(_))
+      Agent( AgentType.fromValue(name).get, policyServerHostname, policyServerUUID.map(new NodeId(_))
           , cfengineKey.map(PublicKey(_)), owner)
     }
   }
@@ -700,7 +701,7 @@ class InventoryMapper(
       policyServerUUID     = e(A_SERVER_UUID)  
     } yield {
  
-      Agent( name, policyServerHostname, policyServerUUID.map(new NodeId(_))
+      Agent( AgentType.fromValue(name).get, policyServerHostname, policyServerUUID.map(new NodeId(_))
           , cfengineKey.map(PublicKey(_)), owner)
     }
   }
