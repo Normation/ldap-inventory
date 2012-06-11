@@ -136,7 +136,9 @@ object RudderMachineIdParsing extends FusionReportParsingExtension with Loggable
 object RudderCpuParsing extends FusionReportParsingExtension with Loggable {
   override def isDefinedAt(x:(Node,InventoryReport)) = { x._1.label == "PROCESSORS" }
   override def apply(x:(Node,InventoryReport)) : InventoryReport = {
-    x._2.copy( machine = x._2.machine.copy( processors = x._2.machine.processors ++ processProcessors(x._1) ) ) 
+    val procs = processProcessors(x._1)
+    procs.map( proc => x._2.machine.processors.map(oldproc => if(oldproc.name==proc.name){oldproc.copy(stepping = proc.stepping, model = proc.model, family= proc.family)} else oldproc)).flatten
+    x._2.copy( machine = x._2.machine.copy( processors = procs ) ) 
   }
   def processProcessors(xml:NodeSeq) : Seq[Processor] = {
     val buf = scala.collection.mutable.Buffer[Processor]()

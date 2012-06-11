@@ -183,7 +183,7 @@ class FusionReportUnmarshaller(
           report = pf(e,report)
         }
     } }
-    
+        logger.error("procs in report are %s ".format(report.machine.processors))
       logger.info("vms is %s".format(report.node.vms))
     val fullReport = report.copy(
        //add all VMs and software ids to node
