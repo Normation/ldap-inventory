@@ -38,6 +38,9 @@ along with Rudder.  If not, see <http://www.gnu.org/licenses/>.
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>inventory-repository</artifactId>
+  
+  <!-- version with fix for #13256 -->
+  <version>4.1.7-backport-13256</version>
 
   <dependencies>
     <dependency>
@@ -58,7 +61,7 @@ along with Rudder.  If not, see <http://www.gnu.org/licenses/>.
     <dependency>
       <groupId>com.normation</groupId>
       <artifactId>scala-ldap</artifactId>
-      <version>${rudder-version}</version>
+      <version>4.1.7-backport-13256</version>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
